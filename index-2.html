@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLASH PAY | المنصة المالية الفاخرة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style nonce="__NONCE__">
+        :root {
+            --gold-primary: #FF9900;
+            --gold-light: #FFD700;
+            --gold-dark: #CC5500;
+            --bg-deep: #050507;
+            --glass-bg: rgba(10, 10, 12, 0.75);
+            --text-main: #ffffff;
+            --text-sec: #a0a0a0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tajawal', sans-serif; -webkit-tap-highlight-color: transparent; outline: none; }
+        :focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px; }
+        [hidden] { display: none !important; }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+            overflow-x: hidden;
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+
+        .bg-logo-watermark {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85vmin; height: 85vmin;
+            max-width: 800px; max-height: 800px;
+            z-index: -3; pointer-events: none;
+            animation: watermarkTanoos 2.5s infinite alternate ease-in-out;
+        }
+        @keyframes watermarkTanoos {
+            0% { opacity: 0.08; transform: translate(-50%, -50%) scale(0.96); filter: blur(1px); }
+            100% { opacity: 0.25; transform: translate(-50%, -50%) scale(1.04); filter: blur(0px); }
+        }
+
+        .ambient-glow {
+            position: fixed; top: 10%; left: 50%; width: 100vw; height: 100vh;
+            transform: translateX(-50%); background: radial-gradient(circle, rgba(255, 153, 0, 0.1) 0%, transparent 50%);
+            z-index: -2; animation: glowTanoos 4s infinite alternate ease-in-out; pointer-events: none;
+        }
+        @keyframes glowTanoos { 0% { opacity: 0.3; transform: translateX(-50%) scale(0.9); } 100% { opacity: 1; transform: translateX(-50%) scale(1.1); filter: brightness(1.2); } }
+
+        .view-section, .main-wrapper { display: none; width: 100%; animation: scaleUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); z-index: 10; }
+        .view-section { max-width: 480px; padding: 20px; margin: 0 auto; }
+
+        .view-section.active { display: block; }
+
+        .main-wrapper.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 1024px) {
+            .main-wrapper.active {
+                display: grid;
+                grid-template-columns: 600px 320px;
+                justify-content: center;
+                align-items: start;
+                gap: 40px;
+                padding: 0;
+            }
+            body { padding-top: 60px; }
+        }
+
+        @keyframes scaleUp { from { opacity: 0; transform: translateY(30px) scale(0.98); filter: blur(5px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
+
+        .video-logo-wrapper {
+            position: relative;
+            width: 160px; height: 160px;
+            margin: 0 auto 25px auto;
+            border-radius: 50%;
+            background: #0d0d0d;
+            box-shadow: 0 0 50px rgba(255, 153, 0, 0.4), inset 0 0 30px rgba(0,0,0,1);
+            z-index: 5;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: logoTanoos 3s infinite alternate ease-in-out;
+        }
+
+        body.view-app-active .video-logo-wrapper {
+            width: 120px; height: 120px; margin-bottom: 15px;
+        }
+
+        @media (min-width: 1024px) {
+            .video-logo-wrapper { width: 200px; height: 200px; margin-bottom: 40px; }
+            body.view-app-active .video-logo-wrapper { width: 150px; height: 150px; margin-bottom: 30px; }
+        }
+
+        @keyframes logoTanoos { 0% { box-shadow: 0 0 30px rgba(255, 153, 0, 0.3), inset 0 0 30px rgba(0,0,0,1); } 100% { box-shadow: 0 0 60px rgba(255, 153, 0, 0.6), inset 0 0 10px rgba(0,0,0,1); } }
+
+        .video-logo-wrapper::before { content: ''; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border-radius: 50%; background: conic-gradient(from 0deg, transparent 60%, rgba(255,255,255,0.9) 80%, var(--gold-light) 100%); mask: radial-gradient(transparent 66%, black 67%); -webkit-mask: radial-gradient(transparent 66%, black 67%); animation: spinRay 2.5s linear infinite; z-index: 10; }
+        .logo-reflection { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%); pointer-events: none; z-index: 15; }
+        @keyframes spinRay { 100% { transform: rotate(360deg); } }
+        .symbols-ring { transform-origin: 150px 150px; animation: spinRay 30s linear infinite; }
+        .reverse-spin { transform-origin: 150px 150px; animation: reverseSpin 35s linear infinite; }
+        @keyframes reverseSpin { 100% { transform: rotate(-360deg); } }
+        .thunderbolt { transform-origin: 150px 150px; animation: thunderPulse 1.2s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes thunderPulse { 0% { transform: scale(0.9); opacity: 0.8; filter: brightness(0.9); } 100% { transform: scale(1.1); opacity: 1; filter: brightness(1.4) drop-shadow(0 0 20px rgba(255, 215, 0, 0.9)); } }
+
+        .fade-promo { text-align: center; color: var(--gold-light); font-size: 14px; font-weight: bold; margin-bottom: 20px; text-shadow: 0 0 15px rgba(255, 153, 0, 0.6); animation: textFadePulse 3s infinite ease-in-out; letter-spacing: 0.5px; line-height: 1.5; padding: 0 10px; }
+        @keyframes textFadePulse { 0%, 100% { opacity: 0.4; transform: scale(0.98); filter: brightness(0.8); } 50% { opacity: 1; transform: scale(1.02); filter: brightness(1.2); } }
+
+        .vip-promo-banner {
+            background: linear-gradient(90deg, rgba(255,153,0,0.05), rgba(255,215,0,0.1), rgba(255,153,0,0.05));
+            border: 1px solid rgba(255,215,0,0.2); border-radius: 16px;
+            padding: 12px; margin-bottom: 25px; text-align: center;
+            display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+            font-weight: 800; color: var(--gold-light);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5), inset 0 0 15px rgba(255,153,0,0.05);
+            position: relative; overflow: hidden;
+        }
+        @media (min-width: 1024px) { .vip-promo-banner { gap: 20px; padding: 15px; font-size: 15px; } }
+        .vip-promo-banner::after { content: ''; position: absolute; top: 0; left: -100%; width: 30%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); transform: skewX(-20deg); animation: sweepBanner 6s infinite; }
+        @keyframes sweepBanner { 0%, 50% { left: -100%; } 70%, 100% { left: 200%; } }
+        .promo-item { display: flex; align-items: center; gap: 5px; font-size: 13px; text-shadow: 0 0 10px rgba(255,153,0,0.4); }
+
+        .marquee-container { width: 100%; max-width: 1200px; margin: 0 auto 35px auto; display: flex; flex-direction: column; align-items: center; }
+        .marquee-title { color: var(--gold-light); font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+        .live-dot { width: 10px; height: 10px; background-color: #00e676; border-radius: 50%; box-shadow: 0 0 12px #00e676; animation: liveBlink 1s infinite alternate; }
+        @keyframes liveBlink { 0% { opacity: 0.3; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); } }
+        .marquee-wrapper { position: relative; width: 100%; border-top: 1px solid rgba(255,153,0,0.2); border-bottom: 1px solid rgba(255,153,0,0.2); background: rgba(0,0,0,0.5); }
+        .marquee-wrapper::before, .marquee-wrapper::after { content: ''; position: absolute; top: 0; width: 60px; height: 100%; z-index: 2; pointer-events: none; }
+        .marquee-wrapper::before { left: 0; background: linear-gradient(to right, var(--bg-deep), transparent); }
+        .marquee-wrapper::after { right: 0; background: linear-gradient(to left, var(--bg-deep), transparent); }
+        .countries-marquee { padding: 12px 0; overflow: hidden; white-space: nowrap; direction: ltr; }
+        .marquee-content { display: inline-block; animation: scroll-rtl 30s linear infinite; font-size: 15px; font-weight: 900; color: var(--gold-primary); letter-spacing: 1px; }
+        .marquee-content span { margin: 0 25px; opacity: 0.8; transition: 0.3s; }
+        .marquee-content span:hover { opacity: 1; text-shadow: 0 0 20px var(--gold-light); transform: scale(1.1); color: var(--gold-light); }
+        @keyframes scroll-rtl { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+        .premium-card { background: var(--glass-bg); backdrop-filter: blur(35px); -webkit-backdrop-filter: blur(35px); border: 1px solid rgba(255, 153, 0, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.1); border-radius: 28px; padding: 30px 20px; box-shadow: 0 30px 60px rgba(0,0,0,0.9); text-align: center; position: relative; overflow: hidden; transition: 0.5s; width: 100%; }
+        @media (min-width: 768px) { .premium-card { padding: 40px 35px; } }
+
+        .premium-card:hover { transform: translateY(-3px); box-shadow: 0 40px 80px rgba(0,0,0,1), 0 0 40px rgba(255, 153, 0, 0.1); }
+        .premium-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.03), transparent); transform: skewX(-25deg); animation: sweepLight 8s infinite; pointer-events: none; }
+        @keyframes sweepLight { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
+
+        h2 { color: var(--gold-light); margin-bottom: 15px; font-size: 26px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 0 20px rgba(255,153,0,0.4); }
+        @media (min-width: 1024px) { h2 { font-size: 30px; } }
+        p.desc { color: var(--text-sec); font-size: 14px; margin-bottom: 30px; line-height: 1.6; }
+
+        .input-group { margin-bottom: 25px; text-align: right; position: relative; width: 100%; }
+        .input-group label { position: absolute; right: 20px; top: -10px; background: #0a0a0c; padding: 0 10px; color: var(--gold-primary); font-size: 13px; font-weight: 700; border-radius: 5px; border: 1px solid rgba(255, 153, 0, 0.3); z-index: 2; transition: 0.3s; }
+
+        select.form-control { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FF9900%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: left 20px top 50%; background-size: 12px auto; padding-left: 40px; }
+
+        .form-control { width: 100%; background: rgba(0,0,0,0.6); border: 1px solid #333; color: #fff; padding: 18px 20px; border-radius: 16px; font-size: 18px; font-weight: 700; transition: 0.4s; box-shadow: inset 0 2px 10px rgba(0,0,0,0.8); }
+        .form-control:focus { border-color: var(--gold-primary); background: rgba(255, 153, 0, 0.05); box-shadow: 0 0 25px rgba(255, 153, 0, 0.2), inset 0 2px 10px rgba(0,0,0,0.5); transform: translateY(-2px); }
+        .form-control:focus + label { text-shadow: 0 0 10px var(--gold-primary); }
+
+        .btn-primary { position: relative; overflow: hidden; width: 100%; padding: 18px; background: linear-gradient(135deg, var(--gold-dark), var(--gold-primary), var(--gold-light)); background-size: 200% 200%; color: #000; border: none; border-radius: 16px; font-size: 18px; font-weight: 900; cursor: pointer; transition: 0.4s; box-shadow: 0 10px 30px rgba(255, 153, 0, 0.3); }
+        .btn-primary:hover { background-position: 100% 50%; transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 40px rgba(255, 153, 0, 0.6); }
+        .btn-primary:active { transform: translateY(1px); }
+        .btn-primary:disabled { background: #1a1a1a; color: #555; box-shadow: none; cursor: not-allowed; border: 1px solid #333; transform: none; }
+
+        /* أزرار مهام المتابعة */
+        .task-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px; margin-bottom: 12px; border: 1px solid rgba(255, 153, 0, 0.3); border-radius: 16px; background: rgba(0,0,0,0.5); color: #fff; text-decoration: none; font-size: 16px; font-weight: 700; transition: 0.3s; }
+        .task-btn:hover { border-color: var(--gold-primary); background: rgba(255, 153, 0, 0.08); }
+        .task-btn.done { border-color: #00e676; color: #00e676; background: rgba(0, 230, 118, 0.06); }
+        .task-btn.done::after { content: '✓'; font-weight: 900; }
+
+        .tabs { display: flex; flex-direction: row; margin-bottom: 25px; background: rgba(0,0,0,0.8); border-radius: 18px; border: 1px solid #222; padding: 6px; position: relative; gap: 5px; }
+        .tab-btn { flex: 1; padding: 14px 10px; border: none; background: transparent; color: var(--text-sec); font-size: 14px; font-weight: 700; border-radius: 14px; cursor: pointer; transition: 0.4s ease; z-index: 1; line-height: 1.3; }
+        @media (min-width: 768px) { .tab-btn { font-size: 16px; padding: 16px; } }
+        .tab-btn.active { color: #000; background: linear-gradient(135deg, var(--gold-primary), var(--gold-light)); box-shadow: 0 5px 20px rgba(255, 153, 0, 0.4); transform: scale(1.02); font-weight: 900; }
+
+        .result-box { margin-top: 30px; background: #000; border: 1px solid var(--gold-dark); padding: 25px 15px; border-radius: 20px; text-align: center; position: relative; overflow: hidden; box-shadow: inset 0 0 50px rgba(255,153,0,0.1), 0 10px 30px rgba(0,0,0,0.5); }
+        @media (min-width: 768px) { .result-box { padding: 35px 20px; } }
+        .result-box::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 2px; background: linear-gradient(90deg, transparent, var(--gold-light), transparent); animation: laserScan 3s infinite linear; }
+        @keyframes laserScan { 100% { left: 200%; } }
+
+        .result-amount { font-size: 36px; font-weight: 900; color: var(--gold-light); letter-spacing: 1px; transition: 0.3s; display: inline-block; text-shadow: 0 0 25px rgba(255,153,0,0.4); word-break: break-word; }
+        @media (min-width: 768px) { .result-amount { font-size: 46px; } }
+        .pop-anim { animation: valueFlash 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes valueFlash { 0% { transform: scale(1); } 40% { transform: scale(1.1); color: #fff; text-shadow: 0 0 50px rgba(255,255,255,1); } 100% { transform: scale(1); } }
+        .text-result { color: var(--gold-primary); font-size: 15px; font-weight: 800; margin-top: 20px; border-top: 1px dashed rgba(255,153,0,0.3); padding-top: 20px; line-height: 1.6; }
+
+        .ads-wrapper { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+        .ad-space { background: rgba(0,0,0,0.4); border: 1px dashed rgba(255,153,0,0.4); border-radius: 24px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.4); height: 150px; transition: 0.4s; position: relative; overflow: hidden; width: 100%; }
+        @media (min-width: 1024px) { .ad-space { height: 250px; } }
+        .ad-space:hover { border-color: var(--gold-light); background: rgba(0,0,0,0.8); color: var(--gold-light); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .ad-space::after { content: 'مساحة إعلانية'; position: absolute; font-size: 14px; font-weight: bold; letter-spacing: 1px; }
+
+        .toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(15,15,15,0.95); border: 1px solid var(--gold-primary); border-radius: 18px; padding: 20px 30px; color: #fff; font-weight: bold; box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 40px rgba(255,153,0,0.3); z-index: 1000; transition: top 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); width: 90%; max-width: 450px; text-align: center; backdrop-filter: blur(15px); }
+        .toast.show { top: 30px; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+            .bg-logo-watermark { opacity: 0.15; }
+        }
+    </style>
+</head>
+<body id="app-body">
+
+    <div class="ambient-glow"></div>
+
+    <div class="bg-logo-watermark" aria-hidden="true">
+        <svg viewBox="0 0 300 300" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <path id="watermarkArc" d="M 45 150 A 105 105 0 1 1 255 150" fill="none" />
+            <circle cx="150" cy="150" r="125" fill="none" stroke="#FF9900" stroke-width="2" stroke-dasharray="10 8" />
+            <circle cx="150" cy="150" r="82" fill="none" stroke="#FFD700" stroke-width="1.5" stroke-dasharray="2 6" />
+            <text fill="#FFD700" font-family="Arial, sans-serif" font-weight="900" font-size="30" letter-spacing="5"><textPath href="#watermarkArc" startOffset="50%" text-anchor="middle">FLASH PAY</textPath></text>
+            <text x="150" y="80" fill="#FF9900" font-size="22" font-weight="bold" text-anchor="middle">€</text>
+            <text x="206" y="105" fill="#FF9900" font-size="20" font-weight="bold" text-anchor="middle">$</text>
+            <text x="220" y="166" fill="#FF9900" font-size="20" font-weight="bold" text-anchor="middle">£</text>
+            <text x="181" y="215" fill="#FF9900" font-size="20" font-weight="bold" text-anchor="middle">₿</text>
+            <text x="119" y="215" fill="#FF9900" font-size="20" font-weight="bold" text-anchor="middle">¥</text>
+            <text x="80" y="166" fill="#FF9900" font-size="20" font-weight="bold" text-anchor="middle">₹</text>
+            <text x="94" y="105" fill="#FF9900" font-size="20" font-weight="bold" text-anchor="middle">₽</text>
+            <path d="M155,90 L115,160 L145,160 L135,225 L185,135 L155,135 Z" fill="#FF9900" />
+        </svg>
+    </div>
+
+    <div class="video-logo-wrapper" id="main-logo" role="img" aria-label="شعار FLASH PAY">
+        <div class="logo-reflection"></div>
+        <svg viewBox="0 0 300 300" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="z-index: 2;">
+            <defs>
+                <path id="textArc" d="M 45 150 A 105 105 0 1 1 255 150" fill="none" />
+                <filter id="superGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter>
+                <filter id="thunderGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter>
+                <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFD700" /><stop offset="50%" stop-color="#FF9900" /><stop offset="100%" stop-color="#CC5500" /></linearGradient>
+            </defs>
+            <circle cx="150" cy="150" r="148" fill="#0d0d0d" />
+            <circle cx="150" cy="150" r="125" fill="none" stroke="url(#goldGrad)" stroke-width="2" stroke-dasharray="10 8" class="reverse-spin" />
+            <text fill="#FFD700" font-family="Arial, sans-serif" font-weight="900" font-size="30" letter-spacing="5" filter="url(#superGlow)"><textPath href="#textArc" startOffset="50%" text-anchor="middle">FLASH PAY</textPath></text>
+            <circle cx="150" cy="150" r="82" fill="none" stroke="#FF9900" stroke-width="1.5" stroke-dasharray="2 6" opacity="0.6" />
+            <g class="symbols-ring">
+                <text x="150" y="80" fill="#FF9900" font-size="22" font-weight="bold" text-anchor="middle">€</text>
+                <text x="206" y="105" fill="#FF9900" font-size="20" font-weight="bold" text-anchor="middle">$</text>
+                <text x="220" y="166" fill="#FF9900" font-size="20" font-weight="bold" text-anchor="middle">£</text>
+                <text x="181" y="215" fill="#FF9900" font-size="20" font-weight="bold" text-anchor="middle">₿</text>
+                <text x="119" y="215" fill="#FF9900" font-size="20" font-weight="bold" text-anchor="middle">¥</text>
+                <text x="80" y="166" fill="#FF9900" font-size="20" font-weight="bold" text-anchor="middle">₹</text>
+                <text x="94" y="105" fill="#FF9900" font-size="20" font-weight="bold" text-anchor="middle">₽</text>
+            </g>
+            <g class="thunderbolt">
+                <path d="M155,90 L115,160 L145,160 L135,225 L185,135 L155,135 Z" fill="#ffffff" filter="url(#thunderGlow)" />
+                <path d="M155,90 L115,160 L145,160 L135,225 L185,135 L155,135 Z" fill="#ffffff" />
+            </g>
+        </svg>
+    </div>
+
+    <div class="marquee-container">
+        <div class="marquee-title"><div class="live-dot"></div>استلام الحوالات من هذه البلدان</div>
+        <div class="marquee-wrapper">
+            <div class="countries-marquee">
+                <div class="marquee-content">
+                    <span>🇸🇾 سوريا</span> • <span>🇱🇧 لبنان</span> • <span>🇯🇴 الأردن</span> •
+                    <span>🇱🇾 ليبيا</span> • <span>🇰🇼 الكويت</span> • <span>🇪🇺 أوروبا</span> •
+                    <span>🇸🇾 سوريا</span> • <span>🇱🇧 لبنان</span> • <span>🇯🇴 الأردن</span> •
+                    <span>🇱🇾 ليبيا</span> • <span>🇰🇼 الكويت</span> • <span>🇪🇺 أوروبا</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-login" class="view-section">
+        <div class="fade-promo">✨ سرعة في التنفيذ، أمان في التعامل، وعمولات منافسة ✨</div>
+        <div class="premium-card">
+            <h2>بوابة الدخول</h2>
+            <p class="desc">أدخل رقم هاتفك للوصول إلى منصة FLASH PAY</p>
+            <div class="input-group">
+                <input type="tel" id="phone-input" class="form-control" inputmode="tel" autocomplete="tel" maxlength="20" dir="ltr" style="text-align: right;" placeholder=" ">
+                <label for="phone-input">رقم الهاتف</label>
+            </div>
+            <button type="button" class="btn-primary" id="btn-login" style="margin-top: 10px;">متابعة</button>
+        </div>
+    </div>
+
+    <div id="view-tasks" class="view-section">
+        <div class="premium-card">
+            <h2>متابعة القنوات</h2>
+            <p class="desc">يرجى متابعة قنواتنا الرسمية لتلقي التحديثات، ثم اضغط دخول المنصة.</p>
+            <a href="#" target="_blank" rel="noopener noreferrer" class="task-btn" id="task-fb"><span>📘 متابعة صفحة الفيسبوك</span></a>
+            <a href="#" target="_blank" rel="noopener noreferrer" class="task-btn" id="task-wa" hidden><span>🟢 الانضمام لمجموعة الواتساب</span></a>
+            <button type="button" class="btn-primary" id="btn-enter-platform" disabled style="margin-top: 25px;">دخول المنصة الرئيسية</button>
+        </div>
+    </div>
+
+    <div id="view-app" class="main-wrapper">
+        <div class="premium-card" style="text-align: right;">
+
+            <div class="vip-promo-banner">
+                <span class="promo-item">⚡ سرعة</span> |
+                <span class="promo-item">🛡️ موثوقية</span> |
+                <span class="promo-item">📉 عمولات منافسة</span>
+            </div>
+
+            <div class="tabs">
+                <button type="button" class="tab-btn active" id="btn-buy" aria-pressed="true">بيع للمكتب (USD)</button>
+                <button type="button" class="tab-btn" id="btn-sell" aria-pressed="false">شراء من المكتب (USD)</button>
+            </div>
+
+            <div class="input-group">
+                <select class="form-control" id="currency">
+                    <option value="USD">USD (دولار أمريكي نقدي)</option>
+                    <option value="USDT">USDT (تيثر رقمي)</option>
+                    <option value="EUR">EUR (يورو - أوروبا)</option>
+                    <option value="LBP">LBP (ليرة لبنانية)</option>
+                    <option value="JOD">JOD (دينار أردني)</option>
+                    <option value="LYD">LYD (دينار ليبي)</option>
+                    <option value="KWD">KWD (دينار كويتي)</option>
+                </select>
+                <label for="currency">اختر العملة</label>
+            </div>
+            <div class="input-group">
+                <input type="number" class="form-control" id="amount" placeholder="0.00" inputmode="decimal" min="0" step="any">
+                <label for="amount">أدخل المبلغ</label>
+            </div>
+            <div style="text-align: center; color: var(--text-sec); font-size: 15px; margin-top: 15px;">
+                السعر المعتمد حالياً: <span id="current-rate" style="color: var(--gold-light); font-weight: 900; font-size: 20px; text-shadow: 0 0 10px rgba(255,223,115,0.4);">0</span> <span style="font-size: 13px;">ل.س</span>
+            </div>
+
+            <div id="rates-status" style="text-align: center; color: var(--text-sec); font-size: 12px; margin-top: 10px; line-height: 1.6;"></div>
+
+            <div class="result-box" aria-live="polite">
+                <div id="result-label" style="color: rgba(255,255,255,0.7); font-size: 16px; margin-bottom: 10px; font-weight: bold;">المبلغ الصافي الذي ستقبضه</div>
+                <div style="margin: 10px 0;">
+                    <span class="result-amount" id="total-result">0</span> <span style="font-size: 22px; color: var(--gold-light);">SYP</span>
+                </div>
+                <div class="text-result" id="text-result">صفر ليرة سورية</div>
+            </div>
+            <button type="button" id="btn-logout" style="background: none; border: none; color: #999; margin-top: 30px; cursor: pointer; font-size: 14px; width: 100%; transition: 0.3s;">تسجيل الخروج</button>
+        </div>
+
+        <div class="ads-wrapper">
+            <div class="ad-space"></div>
+            <div class="ad-space"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script nonce="__NONCE__">
+        /* ============ الإعدادات ============
+           ضع كود دعوة واتساب الحقيقي هنا، مثال: https://chat.whatsapp.com/AbCdEfGhIjKlMn
+           وإذا تُرك فارغاً تُخفى مهمة الواتساب ولا تُشترط. */
+        const CONFIG = {
+            FACEBOOK_URL: "https://www.facebook.com/share/1P16rTSUqd/",
+            WHATSAPP_URL: ""
+        };
+        const MAX_AMOUNT = 1e9;
+        const SESSION_KEY = 'flashpay_current_user';
+
+        // <pure>
+        const UNITS_M = ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
+        const UNITS_F = ["", "إحدى", "اثنتان", "ثلاث", "أربع", "خمس", "ست", "سبع", "ثمان", "تسع"];
+        const TEENS_M = ["عشرة", "أحد عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"];
+        const TEENS_F = ["عشر", "إحدى عشرة", "اثنتا عشرة", "ثلاث عشرة", "أربع عشرة", "خمس عشرة", "ست عشرة", "سبع عشرة", "ثماني عشرة", "تسع عشرة"];
+        const TENS = ["", "عشرة", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"];
+        const HUNDREDS = ["", "مائة", "مائتان", "ثلاثمائة", "أربعمائة", "خمسمائة", "ستمائة", "سبعمائة", "ثمانمائة", "تسعمائة"];
+        const SCALES = [
+            { value: 1e9, one: "مليار", two: "ملياران", twoC: "مليارا", few: "مليارات", many: "ملياراً" },
+            { value: 1e6, one: "مليون", two: "مليونان", twoC: "مليونا", few: "ملايين", many: "مليوناً" },
+            { value: 1e3, one: "ألف", two: "ألفان", twoC: "ألفا", few: "آلاف", many: "ألفاً" }
+        ];
+
+        function joinAnd(parts) {
+            return parts.map((p, i) => (i ? "و" + p : p)).join(" ");
+        }
+
+        function under100(n, fem) {
+            const u = fem ? UNITS_F : UNITS_M;
+            if (n < 10) return u[n];
+            if (n < 20) return (fem ? TEENS_F : TEENS_M)[n - 10];
+            const t = Math.floor(n / 10), o = n % 10;
+            return o ? u[o] + " و" + TENS[t] : TENS[t];
+        }
+
+        function upTo999(n, fem) {
+            const h = Math.floor(n / 100), r = n % 100, p = [];
+            if (h) p.push(HUNDREDS[h]);
+            if (r) p.push(under100(r, fem));
+            return joinAnd(p);
+        }
+
+        function scaleText(c, s) {
+            const d = c % 100;
+            if (c === 1) return s.one;
+            if (c === 2) return s.two;
+            if (c === 200) return "مائتا " + s.one;
+            if (d >= 3 && d <= 10) return upTo999(c, false) + " " + s.few;
+            if (d >= 11) return upTo999(c, false) + " " + s.many;
+            return upTo999(c, false) + " " + s.one;
+        }
+
+        function liraPhrase(whole) {
+            if (whole === 1) return "ليرة سورية واحدة";
+            if (whole === 2) return "ليرتان سوريتان";
+            let n = whole;
+            const pre = [];
+            let last = null;
+            for (const s of SCALES) {
+                const c = Math.floor(n / s.value);
+                n -= c * s.value;
+                if (c) { pre.push(scaleText(c, s)); last = { c, s, idx: pre.length - 1 }; }
+            }
+            const rem = n;
+            if (rem === 0) {
+                if (last && last.c === 2) pre[last.idx] = last.s.twoC;
+                return joinAnd(pre) + " ليرة سورية";
+            }
+            const d = rem % 100;
+            if (d === 1 || d === 2) {
+                const h = Math.floor(rem / 100);
+                if (h) pre.push(HUNDREDS[h]);
+                pre.push(d === 1 ? "ليرة سورية واحدة" : "ليرتان سوريتان");
+                return joinAnd(pre);
+            }
+            pre.push(rem === 200 ? "مائتا" : upTo999(rem, true));
+            return joinAnd(pre) + (d >= 3 && d <= 10 ? " ليرات سورية" : " ليرة سورية");
+        }
+
+        function qirshPhrase(p) {
+            if (p === 1) return "قرش واحد";
+            if (p === 2) return "قرشان";
+            if (p <= 10) return upTo999(p, false) + " قروش";
+            return upTo999(p, false) + " قرشاً";
+        }
+
+        function numberToArabicWords(total) {
+            if (!isFinite(total) || total <= 0) return "صفر ليرة سورية";
+            const cents = Math.round(total * 100);
+            if (cents === 0) return "صفر ليرة سورية";
+            const whole = Math.floor(cents / 100), p = cents % 100;
+            const parts = [];
+            if (whole) parts.push(liraPhrase(whole));
+            if (p) parts.push(qirshPhrase(p));
+            return joinAnd(parts);
+        }
+
+        function normalizePhone(raw) {
+            const map = { '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4', '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
+                          '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4', '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9' };
+            return String(raw).replace(/[٠-٩۰-۹]/g, ch => map[ch]).replace(/[\s\-()]/g, '');
+        }
+
+        function isValidPhone(p) {
+            return /^\+?\d{8,15}$/.test(p);
+        }
+
+        function isValidWhatsappUrl(u) {
+            return /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]{10,}$/.test(u);
+        }
+        // </pure>
+
+        /* ---------- التخزين المحلي (آمن عند تعطّله) ---------- */
+        let memorySession = null;
+        function readSession() {
+            try { return localStorage.getItem(SESSION_KEY); } catch (e) { return memorySession; }
+        }
+        function writeSession(v) {
+            memorySession = v;
+            try { localStorage.setItem(SESSION_KEY, v); } catch (e) { /* يبقى في الذاكرة */ }
+        }
+        function clearSession() {
+            memorySession = null;
+            try { localStorage.removeItem(SESSION_KEY); } catch (e) { /* لا شيء */ }
+        }
+
+        /* ---------- الواجهات ---------- */
+        const $ = id => document.getElementById(id);
+        let pendingPhone = null;
+        let fbDone = false, waDone = false, waRequired = false;
+
+        function showView(viewId) {
+            document.querySelectorAll('.view-section, .main-wrapper').forEach(el => el.classList.remove('active'));
+            $(viewId).classList.add('active');
+            document.body.className = viewId + '-active';
+        }
+
+        let toastTimer = null;
+        function showToast(msg) {
+            const toast = $('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        function setupTasks() {
+            $('task-fb').href = CONFIG.FACEBOOK_URL;
+            waRequired = isValidWhatsappUrl(CONFIG.WHATSAPP_URL);
+            if (waRequired) {
+                $('task-wa').href = CONFIG.WHATSAPP_URL;
+                $('task-wa').hidden = false;
+            } else {
+                $('task-wa').hidden = true;
+            }
+            waDone = !waRequired;
+        }
+
+        function updateEnterButton() {
+            $('btn-enter-platform').disabled = !(fbDone && waDone);
+        }
+
+        function markTask(name) {
+            if (name === 'fb') { fbDone = true; $('task-fb').classList.add('done'); }
+            if (name === 'wa') { waDone = true; $('task-wa').classList.add('done'); }
+            updateEnterButton();
+        }
+
+        function handleLogin() {
+            const phone = normalizePhone($('phone-input').value);
+            if (!isValidPhone(phone)) return showToast("⚠️ أدخل رقم هاتف صحيح (من 8 إلى 15 رقماً)");
+            pendingPhone = phone;
+            fbDone = false;
+            $('task-fb').classList.remove('done');
+            $('task-wa').classList.remove('done');
+            setupTasks();
+            updateEnterButton();
+            showView('view-tasks');
+        }
+
+        function enterPlatform() {
+            if (!pendingPhone) { showView('view-login'); return; }
+            writeSession(pendingPhone);
+            showToast("✨ أهلاً بك في المنصة");
+            showView('view-app');
+            calculate();
+        }
+
+        function logout() {
+            clearSession();
+            pendingPhone = null;
+            fbDone = false;
+            $('phone-input').value = "";
+            $('amount').value = "";
+            showView('view-login');
+        }
+
+        /* ---------- الأسعار (تأتي من الخادم وتتحدث تلقائياً) ---------- */
+        const RATE_CODES = ['USD', 'USDT', 'EUR', 'LBP', 'JOD', 'LYD', 'KWD'];
+        const RATES_REFRESH_MS = 60 * 1000;
+        const STALE_AFTER_MS = 36 * 60 * 60 * 1000;
+        let rates = null;
+        let ratesUpdatedAt = null;
+
+        function validRates(r) {
+            return !!r && typeof r === 'object' && RATE_CODES.every(c =>
+                r[c] && Number.isFinite(r[c].buy) && Number.isFinite(r[c].sell) && r[c].buy > 0 && r[c].sell > 0);
+        }
+
+        function renderRatesStatus() {
+            const el = $('rates-status');
+            if (!rates) { el.textContent = 'الأسعار غير متاحة حالياً'; return; }
+            const t = ratesUpdatedAt ? new Date(ratesUpdatedAt) : null;
+            if (!t || isNaN(t)) { el.textContent = ''; return; }
+            const stale = Date.now() - t.getTime() > STALE_AFTER_MS;
+            el.textContent = 'آخر تحديث للأسعار: ' + t.toLocaleString('ar-SY', { dateStyle: 'medium', timeStyle: 'short' }) +
+                (stale ? ' — قد تكون الأسعار قديمة، تأكد من المكتب قبل التنفيذ' : '');
+        }
+
+        async function loadRates() {
+            try {
+                const r = await fetch('/api/rates', { cache: 'no-store' });
+                if (!r.ok) throw new Error('http ' + r.status);
+                const d = await r.json();
+                if (!validRates(d.rates)) throw new Error('no rates');
+                rates = d.rates;
+                ratesUpdatedAt = d.updatedAt || null;
+            } catch (e) {
+                /* نُبقي آخر أسعار تم تحميلها بنجاح */
+            }
+            renderRatesStatus();
+            calculate();
+        }
+
+        let currentMode = 'buy';
+
+        function setMode(mode) { currentMode = mode; calculate(); }
+
+        function triggerFlashAnimation() {
+            const el = $('total-result');
+            el.classList.remove('pop-anim');
+            void el.offsetWidth;
+            el.classList.add('pop-anim');
+        }
+
+        function calculate() {
+            const amountInput = $('amount').value;
+            const amount = parseFloat(amountInput);
+            const currency = $('currency').value;
+
+            $('btn-buy').textContent = `بيع للمكتب (${currency})`;
+            $('btn-sell').textContent = `شراء من المكتب (${currency})`;
+            $('btn-buy').classList.toggle('active', currentMode === 'buy');
+            $('btn-sell').classList.toggle('active', currentMode === 'sell');
+            $('btn-buy').setAttribute('aria-pressed', String(currentMode === 'buy'));
+            $('btn-sell').setAttribute('aria-pressed', String(currentMode === 'sell'));
+
+            if (!rates) {
+                $('current-rate').textContent = '—';
+                $('total-result').textContent = "0";
+                $('text-result').textContent = "الأسعار غير متاحة حالياً، حاول لاحقاً";
+                return;
+            }
+            const rate = rates[currency][currentMode];
+
+            $('result-label').textContent = currentMode === 'buy' ? 'المبلغ الصافي الذي ستقبضه' : 'إجمالي المبلغ المطلوب دفعه';
+            $('current-rate').textContent = new Intl.NumberFormat('ar-SY', { maximumFractionDigits: 6 }).format(rate);
+
+            if (!isFinite(amount) || amount <= 0) {
+                $('total-result').textContent = "0";
+                $('text-result').textContent = "صفر ليرة سورية";
+                return;
+            }
+            if (amount > MAX_AMOUNT) {
+                $('total-result').textContent = "0";
+                $('text-result').textContent = "المبلغ كبير جداً، الحد الأقصى مليار وحدة";
+                return;
+            }
+
+            const totalValue = amount * rate;
+            const previousValue = $('total-result').textContent;
+            const newValue = new Intl.NumberFormat('ar-SY', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalValue);
+
+            if (previousValue !== newValue) {
+                $('total-result').textContent = newValue;
+                triggerFlashAnimation();
+            }
+            $('text-result').textContent = numberToArabicWords(totalValue);
+        }
+
+        /* ---------- ربط الأحداث ---------- */
+        $('btn-login').addEventListener('click', handleLogin);
+        $('phone-input').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+        $('task-fb').addEventListener('click', () => markTask('fb'));
+        $('task-wa').addEventListener('click', () => markTask('wa'));
+        $('btn-enter-platform').addEventListener('click', enterPlatform);
+        $('btn-logout').addEventListener('click', logout);
+        $('btn-buy').addEventListener('click', () => setMode('buy'));
+        $('btn-sell').addEventListener('click', () => setMode('sell'));
+        $('currency').addEventListener('change', calculate);
+        $('amount').addEventListener('input', calculate);
+
+        /* ---------- البدء ---------- */
+        (function init() {
+            loadRates();
+            setInterval(loadRates, RATES_REFRESH_MS);
+            document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loadRates(); });
+            const saved = readSession();
+            if (saved && isValidPhone(saved)) {
+                showView('view-app');
+                calculate();
+            } else {
+                clearSession();
+                showView('view-login');
+            }
+        })();
+    </script>
+</body>
+</html>

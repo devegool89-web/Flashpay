@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>لوحة التحكم | FLASH PAY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style nonce="__NONCE__">
+        :root {
+            --gold: #FF9900;
+            --gold-light: #FFD700;
+            --gold-dark: #CC5500;
+            --bg: #050507;
+            --card: rgba(14, 14, 18, 0.92);
+            --line: rgba(255, 153, 0, 0.25);
+            --muted: #a0a0a0;
+            --danger: #ff4757;
+            --ok: #00e676;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tajawal', sans-serif; -webkit-tap-highlight-color: transparent; }
+        :focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px; }
+        [hidden] { display: none !important; }
+
+        body { background: var(--bg); color: #fff; min-height: 100vh; padding: 20px 14px 60px; }
+        body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(circle at 50% 0%, rgba(255,153,0,0.12), transparent 55%); pointer-events: none; z-index: -1; }
+
+        .wrap { max-width: 860px; margin: 0 auto; }
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 22px 18px; margin-bottom: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+        @media (min-width: 700px) { .card { padding: 30px 28px; } }
+
+        h1 { color: var(--gold-light); font-size: 24px; font-weight: 900; }
+        h2 { color: var(--gold-light); font-size: 19px; font-weight: 900; margin-bottom: 6px; }
+        .sub { color: var(--muted); font-size: 13px; line-height: 1.7; margin-bottom: 18px; }
+
+        .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+
+        .field { position: relative; margin-bottom: 20px; }
+        .field label { position: absolute; right: 16px; top: -10px; background: #0e0e12; padding: 0 8px; color: var(--gold); font-size: 12px; font-weight: 700; border: 1px solid var(--line); border-radius: 5px; }
+        input { width: 100%; background: rgba(0,0,0,0.6); border: 1px solid #333; color: #fff; padding: 15px 16px; border-radius: 14px; font-size: 16px; font-weight: 700; }
+        input:focus { border-color: var(--gold); background: rgba(255,153,0,0.05); }
+        input[dir="ltr"] { text-align: right; }
+
+        button { font-family: inherit; cursor: pointer; }
+        .btn { padding: 14px 22px; border: none; border-radius: 14px; font-size: 16px; font-weight: 900; color: #000; background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light)); }
+        .btn:disabled { background: #1a1a1a; color: #666; border: 1px solid #333; cursor: not-allowed; }
+        .btn-block { width: 100%; }
+        .btn-ghost { background: transparent; color: #fff; border: 1px solid #444; padding: 10px 16px; font-size: 14px; }
+        .btn-danger { background: transparent; color: var(--danger); border: 1px solid rgba(255,71,87,0.5); padding: 8px 14px; font-size: 13px; font-weight: 700; border-radius: 10px; }
+
+        .rate-row { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 14px 0; border-top: 1px dashed rgba(255,153,0,0.2); }
+        .rate-row:first-of-type { border-top: none; }
+        @media (min-width: 700px) { .rate-row { grid-template-columns: 1.2fr 1fr 1fr; align-items: end; } }
+        .cur-name { font-weight: 900; font-size: 16px; }
+        .cur-name small { display: block; color: var(--muted); font-weight: 500; font-size: 12px; }
+        .rate-cell { position: relative; }
+        .rate-cell span { display: block; color: var(--gold); font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+
+        .status { margin-top: 14px; font-size: 13px; color: var(--muted); line-height: 1.7; }
+        .status.ok { color: var(--ok); }
+
+        .add-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+        @media (min-width: 700px) { .add-grid { grid-template-columns: 1fr 1.6fr auto; gap: 14px; align-items: start; } .add-grid .btn { margin-top: 0; height: 52px; } }
+
+        .search { margin: 10px 0 16px; }
+        .count { color: var(--gold-light); font-weight: 900; }
+
+        .client { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; padding: 14px 0; border-top: 1px dashed rgba(255,153,0,0.2); align-items: center; }
+        .client .phone { font-weight: 900; font-size: 17px; direction: ltr; text-align: right; }
+        .client .fb { font-size: 14px; word-break: break-all; color: #ddd; }
+        .client .fb a { color: var(--gold-light); }
+        .client .date { color: var(--muted); font-size: 12px; }
+        .client .meta { display: flex; flex-direction: column; gap: 4px; }
+        .empty { color: var(--muted); text-align: center; padding: 24px 0; font-size: 14px; }
+
+        #toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(15,15,15,0.97); border: 1px solid var(--gold); border-radius: 16px; padding: 14px 22px; font-weight: 700; z-index: 50; transition: top 0.4s; width: 90%; max-width: 440px; text-align: center; }
+        #toast.show { top: 18px; }
+        #toast.err { border-color: var(--danger); }
+
+        .login { max-width: 420px; margin: 12vh auto 0; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    </style>
+</head>
+<body>
+
+    <main id="view-login" class="wrap login" hidden>
+        <div class="card">
+            <h1>لوحة التحكم</h1>
+            <p class="sub">FLASH PAY — دخول المدير فقط</p>
+            <div class="field">
+                <input type="password" id="login-password" autocomplete="current-password" maxlength="200">
+                <label for="login-password">كلمة المرور</label>
+            </div>
+            <button type="button" class="btn btn-block" id="btn-login">دخول</button>
+            <div class="status" id="login-status" role="alert"></div>
+        </div>
+    </main>
+
+    <main id="view-dash" class="wrap" hidden>
+        <div class="topbar">
+            <h1>لوحة التحكم</h1>
+            <button type="button" class="btn btn-ghost" id="btn-logout">تسجيل الخروج</button>
+        </div>
+
+        <section class="card">
+            <h2>أسعار الصرف اليومية</h2>
+            <p class="sub">الأسعار بالليرة السورية لكل وحدة واحدة من العملة. عند الحفظ تصل للمستخدمين تلقائياً خلال دقيقة تقريباً دون إعادة تحميل الصفحة.</p>
+            <div id="rates-rows"></div>
+            <button type="button" class="btn btn-block" id="btn-save-rates" style="margin-top: 16px;">حفظ الأسعار ونشرها</button>
+            <div class="status" id="rates-status"></div>
+        </section>
+
+        <section class="card">
+            <h2>العملاء المسجلون: <span class="count" id="clients-total">0</span></h2>
+            <p class="sub">سجّل رقم العميل مع رابط أو اسم صفحة الفيسبوك التي تابعك منها.</p>
+            <div class="add-grid">
+                <div class="field">
+                    <input type="tel" id="new-phone" dir="ltr" inputmode="tel" autocomplete="off" maxlength="20">
+                    <label for="new-phone">رقم الهاتف</label>
+                </div>
+                <div class="field">
+                    <input type="text" id="new-fb" autocomplete="off" maxlength="300">
+                    <label for="new-fb">صفحة الفيسبوك (رابط أو اسم)</label>
+                </div>
+                <button type="button" class="btn" id="btn-add-client">إضافة</button>
+            </div>
+            <div class="field search">
+                <input type="search" id="client-search" autocomplete="off" maxlength="100">
+                <label for="client-search">بحث بالرقم أو الصفحة</label>
+            </div>
+            <div id="clients-list"></div>
+        </section>
+    </main>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <script nonce="__NONCE__">
+        const CUR_INFO = {
+            USD: ['دولار أمريكي (نقدي)', 'سوريا'],
+            USDT: ['تيثر USDT', 'رقمي'],
+            EUR: ['يورو', 'أوروبا'],
+            LBP: ['ليرة لبنانية', 'لبنان'],
+            JOD: ['دينار أردني', 'الأردن'],
+            LYD: ['دينار ليبي', 'ليبيا'],
+            KWD: ['دينار كويتي', 'الكويت']
+        };
+
+        const $ = id => document.getElementById(id);
+        let currencies = [];
+
+        function toast(msg, isErr) {
+            const t = $('toast');
+            t.textContent = msg;
+            t.classList.toggle('err', !!isErr);
+            t.classList.add('show');
+            clearTimeout(toast.timer);
+            toast.timer = setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        function show(view) {
+            $('view-login').hidden = view !== 'login';
+            $('view-dash').hidden = view !== 'dash';
+        }
+
+        async function api(method, url, body) {
+            const opt = { method, credentials: 'same-origin', headers: {} };
+            if (body !== undefined) {
+                opt.headers['Content-Type'] = 'application/json';
+                opt.body = JSON.stringify(body);
+            }
+            let r;
+            try { r = await fetch(url, opt); } catch (e) { throw new Error('تعذّر الاتصال بالخادم'); }
+            let data = null;
+            try { data = await r.json(); } catch (e) { /* لا شيء */ }
+            if (r.status === 401 && url !== '/api/admin/login') {
+                show('login');
+                throw new Error('انتهت الجلسة، سجّل الدخول من جديد');
+            }
+            if (!r.ok) throw new Error((data && data.message) || 'حدث خطأ غير متوقع');
+            return data;
+        }
+
+        function fmtDate(iso) {
+            const d = new Date(iso);
+            return isNaN(d) ? '' : d.toLocaleString('ar', { dateStyle: 'medium', timeStyle: 'short' });
+        }
+
+        /* ---------- الدخول ---------- */
+        async function login() {
+            const pw = $('login-password').value;
+            $('login-status').textContent = '';
+            if (!pw) { $('login-status').textContent = 'أدخل كلمة المرور'; return; }
+            $('btn-login').disabled = true;
+            try {
+                await api('POST', '/api/admin/login', { password: pw });
+                $('login-password').value = '';
+                await loadDash();
+            } catch (e) {
+                $('login-status').textContent = e.message;
+            } finally {
+                $('btn-login').disabled = false;
+            }
+        }
+
+        async function logout() {
+            try { await api('POST', '/api/admin/logout', {}); } catch (e) { /* نتابع */ }
+            show('login');
+        }
+
+        /* ---------- الأسعار ---------- */
+        function buildRateRows(rates) {
+            const box = $('rates-rows');
+            box.textContent = '';
+            currencies.forEach(code => {
+                const info = CUR_INFO[code] || [code, ''];
+                const row = document.createElement('div');
+                row.className = 'rate-row';
+
+                const name = document.createElement('div');
+                name.className = 'cur-name';
+                name.textContent = code + ' — ' + info[0];
+                const small = document.createElement('small');
+                small.textContent = info[1];
+                name.appendChild(small);
+                row.appendChild(name);
+
+                [['buy', 'المكتب يشتري بـ (يقبضه العميل عند البيع)'], ['sell', 'المكتب يبيع بـ (يدفعه العميل عند الشراء)']].forEach(([key, label]) => {
+                    const cell = document.createElement('div');
+                    cell.className = 'rate-cell';
+                    const span = document.createElement('span');
+                    span.textContent = label;
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.step = 'any';
+                    input.min = '0';
+                    input.inputMode = 'decimal';
+                    input.id = 'rate-' + code + '-' + key;
+                    input.setAttribute('aria-label', code + ' ' + label);
+                    if (rates && rates[code] && typeof rates[code][key] === 'number') input.value = String(rates[code][key]);
+                    cell.appendChild(span);
+                    cell.appendChild(input);
+                    row.appendChild(cell);
+                });
+                box.appendChild(row);
+            });
+        }
+
+        function renderRatesStatus(updatedAt) {
+            const el = $('rates-status');
+            el.className = 'status';
+            el.textContent = updatedAt ? 'آخر تحديث منشور: ' + fmtDate(updatedAt) : 'لم تُنشر أسعار بعد، لن تعمل الحاسبة للمستخدمين حتى تحفظ الأسعار.';
+        }
+
+        async function saveRates() {
+            const payload = {};
+            for (const code of currencies) {
+                const buy = parseFloat($('rate-' + code + '-buy').value);
+                const sell = parseFloat($('rate-' + code + '-sell').value);
+                if (!Number.isFinite(buy) || !Number.isFinite(sell) || buy <= 0 || sell <= 0) {
+                    toast('أدخل سعري الشراء والبيع لـ ' + code + ' بأرقام أكبر من صفر', true);
+                    return;
+                }
+                if (sell < buy) {
+                    toast('في ' + code + ': سعر بيع المكتب يجب ألا يقل عن سعر شراء المكتب', true);
+                    return;
+                }
+                payload[code] = { buy, sell };
+            }
+            $('btn-save-rates').disabled = true;
+            try {
+                const data = await api('PUT', '/api/admin/rates', { rates: payload });
+                buildRateRows(data.rates);
+                renderRatesStatus(data.ratesUpdatedAt);
+                $('rates-status').classList.add('ok');
+                toast('تم حفظ الأسعار ونشرها');
+            } catch (e) {
+                toast(e.message, true);
+            } finally {
+                $('btn-save-rates').disabled = false;
+            }
+        }
+
+        /* ---------- العملاء ---------- */
+        function isFbUrl(s) {
+            try {
+                const u = new URL(s);
+                const h = u.hostname.toLowerCase();
+                return u.protocol === 'https:' && (h === 'facebook.com' || h.endsWith('.facebook.com') || h === 'fb.com' || h.endsWith('.fb.com') || h === 'fb.me');
+            } catch (e) { return false; }
+        }
+
+        function renderClients(list, total) {
+            $('clients-total').textContent = String(total);
+            const box = $('clients-list');
+            box.textContent = '';
+            if (!list.length) {
+                const e = document.createElement('div');
+                e.className = 'empty';
+                e.textContent = total ? 'لا نتائج مطابقة للبحث' : 'لا عملاء مسجلون بعد';
+                box.appendChild(e);
+                return;
+            }
+            list.forEach(c => {
+                const row = document.createElement('div');
+                row.className = 'client';
+
+                const meta = document.createElement('div');
+                meta.className = 'meta';
+                const phone = document.createElement('div');
+                phone.className = 'phone';
+                phone.textContent = c.phone;
+                const fb = document.createElement('div');
+                fb.className = 'fb';
+                if (isFbUrl(c.facebook)) {
+                    const a = document.createElement('a');
+                    a.href = c.facebook;
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                    a.textContent = c.facebook;
+                    fb.appendChild(a);
+                } else {
+                    fb.textContent = c.facebook;
+                }
+                const date = document.createElement('div');
+                date.className = 'date';
+                date.textContent = 'سُجّل: ' + fmtDate(c.createdAt);
+                meta.appendChild(phone);
+                meta.appendChild(fb);
+                meta.appendChild(date);
+
+                const del = document.createElement('button');
+                del.type = 'button';
+                del.className = 'btn-danger';
+                del.textContent = 'حذف';
+                del.addEventListener('click', () => deleteClient(c));
+
+                row.appendChild(meta);
+                row.appendChild(del);
+                box.appendChild(row);
+            });
+        }
+
+        async function loadClients() {
+            const q = $('client-search').value.trim();
+            const data = await api('GET', '/api/admin/clients' + (q ? '?q=' + encodeURIComponent(q) : ''));
+            renderClients(data.clients, data.total);
+        }
+
+        async function addClient() {
+            const phone = $('new-phone').value;
+            const facebook = $('new-fb').value;
+            if (!phone.trim() || !facebook.trim()) { toast('أدخل رقم الهاتف وصفحة الفيسبوك', true); return; }
+            $('btn-add-client').disabled = true;
+            try {
+                await api('POST', '/api/admin/clients', { phone, facebook });
+                $('new-phone').value = '';
+                $('new-fb').value = '';
+                $('client-search').value = '';
+                await loadClients();
+                toast('تمت إضافة العميل');
+                $('new-phone').focus();
+            } catch (e) {
+                toast(e.message, true);
+            } finally {
+                $('btn-add-client').disabled = false;
+            }
+        }
+
+        async function deleteClient(c) {
+            if (!confirm('حذف العميل ' + c.phone + '؟')) return;
+            try {
+                await api('DELETE', '/api/admin/clients/' + encodeURIComponent(c.id));
+                await loadClients();
+                toast('تم الحذف');
+            } catch (e) {
+                toast(e.message, true);
+            }
+        }
+
+        async function loadDash() {
+            const state = await api('GET', '/api/admin/state');
+            currencies = state.currencies;
+            buildRateRows(state.rates);
+            renderRatesStatus(state.ratesUpdatedAt);
+            show('dash');
+            await loadClients();
+        }
+
+        /* ---------- الأحداث والبدء ---------- */
+        $('btn-login').addEventListener('click', login);
+        $('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+        $('btn-logout').addEventListener('click', logout);
+        $('btn-save-rates').addEventListener('click', saveRates);
+        $('btn-add-client').addEventListener('click', addClient);
+        $('new-fb').addEventListener('keydown', e => { if (e.key === 'Enter') addClient(); });
+        let searchTimer = null;
+        $('client-search').addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => loadClients().catch(e => toast(e.message, true)), 250);
+        });
+
+        (async function init() {
+            try { await loadDash(); } catch (e) { show('login'); }
+        })();
+    </script>
+</body>
+</html>
