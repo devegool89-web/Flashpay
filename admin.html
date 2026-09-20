@@ -184,7 +184,8 @@
         $('btn-push-fill').onclick = () => { $('push-body').value = ratesText(); };
         $('btn-push-send').onclick = sendPush;
 
-        setInterval(() => { if (!$('view-dash').hidden) loadClients(); }, 10000);
+        async function refreshPushCount() { try { const st = await api('GET', '/api/admin/state'); $('push-count').textContent = st.pushSubscribers || 0; } catch (e) {} }
+        setInterval(() => { if (!$('view-dash').hidden) { loadClients(); refreshPushCount(); } }, 10000);
 
         (async function init() { try { await loadDash(); } catch (e) { show('login'); } })();
     </script>
