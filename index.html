@@ -261,8 +261,14 @@
         let pendingName = null, pendingPhone = null;
         let fbDone = false, waDone = false, waRequired = false;
         let pingInterval = null;
-        let swReg = null, pushInitDone = false;
+        let swReg = null, pushSetupDone = false, pushStep = '';
         const PUSH_OK = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+        const PUSH_ASK_KEY = 'flashpay_push_asked', PUSH_OFF_KEY = 'flashpay_push_off';
+        const DAY_MS = 86400000;
+
+        function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+        function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
 
         function urlB64ToBytes(b64) {
             const s = (b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/');
@@ -281,23 +287,54 @@
                 return r.ok;
             } catch (e) { return false; }
         }
-        async function refreshPushButton(sync) {
+        function showPushHint(text) { $('push-hint').textContent = text; $('push-hint').hidden = false; }
+        function pushFail(e) {
+            const name = (e && e.name) || 'Error', msg = (e && e.message) || '';
+            let why = '';
+            if (pushStep === 'subscribe' && name === 'AbortError') why = ' — قد يكون السبب أن خدمة الإشعارات (Google) غير متاحة على هذا الجهاز أو هذه الشبكة، جرّب إيقاف VPN أو شبكة أخرى.';
+            showPushHint('تعذّر تفعيل الإشعارات [' + pushStep + '] ' + name + (msg ? ': ' + msg.slice(0, 120) : '') + why);
+        }
+        function shouldAsk() {
+            if (!PUSH_OK || Notification.permission !== 'default' || lsGet(PUSH_OFF_KEY)) return false;
+            return Date.now() - Number(lsGet(PUSH_ASK_KEY) || 0) > 3 * DAY_MS;
+        }
+        function askPermission() { lsSet(PUSH_ASK_KEY, String(Date.now())); return Notification.requestPermission(); }
+
+        async function refreshPushButton() {
             const sub = await currentSub();
             const on = !!sub && Notification.permission === 'granted';
             $('btn-push').textContent = on ? '🔔 الإشعارات مفعّلة (اضغط للإيقاف)' : '🔔 تفعيل إشعارات الأسعار';
             $('btn-push').classList.toggle('on', on);
-            if (on && sync && pendingPhone) postSub(sub);
         }
-        async function enablePush() {
-            const perm = await Notification.requestPermission();
-            if (perm !== 'granted') { showToast('⚠️ لم يتم السماح بالإشعارات. فعّلها من إعدادات المتصفح لهذا الموقع'); return; }
-            const kr = await fetch('/api/push/key'); const kd = await kr.json();
+        async function ensureSubscribed() {
+            pushStep = 'key';
+            const kd = await (await fetch('/api/push/key')).json();
+            if (!kd || !kd.key) throw new Error('السيرفر لم يرسل مفتاح الإشعارات');
             const keyBytes = urlB64ToBytes(kd.key);
+            pushStep = 'getSubscription';
             let sub = await currentSub();
             if (sub && !sameKey(sub, keyBytes)) { await sub.unsubscribe(); sub = null; }
-            if (!sub) sub = await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes });
-            if (await postSub(sub)) showToast('✅ تم تفعيل إشعارات الأسعار');
-            else showToast('⚠️ تعذّر حفظ الاشتراك، حاول مرة أخرى');
+            if (!sub) { pushStep = 'subscribe'; sub = await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes }); }
+            pushStep = 'save';
+            if (!(await postSub(sub))) throw new Error('السيرفر رفض حفظ الاشتراك');
+            return sub;
+        }
+        async function afterPermission(perm) {
+            if (perm === 'granted') {
+                if (!lsGet(PUSH_OFF_KEY)) {
+                    try { await ensureSubscribed(); $('push-hint').hidden = true; } catch (e) { pushFail(e); }
+                }
+            } else if (perm === 'denied') {
+                showPushHint('الإشعارات محظورة لهذا الموقع. لتفعيلها: اضغط على أيقونة الموقع بجانب العنوان ← الأذونات ← الإشعارات ← السماح، ثم أعد تحميل الصفحة.');
+            }
+            refreshPushButton();
+        }
+        function armFirstGesture() {
+            const h = () => {
+                document.removeEventListener('pointerup', h, true); document.removeEventListener('keydown', h, true);
+                if (shouldAsk()) askPermission().then(afterPermission).catch(() => {});
+            };
+            document.addEventListener('pointerup', h, true); document.addEventListener('keydown', h, true);
         }
         async function disablePush() {
             const sub = await currentSub();
@@ -305,28 +342,39 @@
             const endpoint = sub.endpoint;
             await sub.unsubscribe();
             try { await fetch('/api/push/unsubscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint }) }); } catch (e) {}
-            showToast('تم إيقاف الإشعارات');
         }
         async function onPushClick() {
             const btn = $('btn-push'); btn.disabled = true;
             try {
                 const sub = await currentSub();
-                if (sub && Notification.permission === 'granted') await disablePush(); else await enablePush();
-            } catch (e) { showToast('⚠️ تعذّر تفعيل الإشعارات على هذا المتصفح'); }
+                if (sub && Notification.permission === 'granted') {
+                    await disablePush(); lsSet(PUSH_OFF_KEY, '1'); showToast('تم إيقاف الإشعارات');
+                } else {
+                    lsDel(PUSH_OFF_KEY);
+                    let perm = Notification.permission;
+                    if (perm === 'default') perm = await askPermission();
+                    if (perm !== 'granted') { await afterPermission(perm); showToast('⚠️ لم يتم السماح بالإشعارات'); }
+                    else { await ensureSubscribed(); $('push-hint').hidden = true; showToast('✅ تم تفعيل إشعارات الأسعار'); }
+                }
+            } catch (e) { pushFail(e); showToast('⚠️ تعذّر تفعيل الإشعارات — التفاصيل أسفل الزر'); try { $('push-hint').scrollIntoView({ block: 'center' }); } catch (x) {} }
             btn.disabled = false;
-            refreshPushButton(false);
+            refreshPushButton();
         }
-        async function initPush() {
-            if (pushInitDone) return; pushInitDone = true;
+        // permPromise: نتيجة طلب الإذن الذي بدأ مباشرة عند ضغطة المستخدم (إن وُجد)
+        async function setupPush(permPromise) {
+            if (pushSetupDone) return; pushSetupDone = true;
             if (!PUSH_OK) {
                 const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
                 const standalone = navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
-                if (ios && !standalone) { $('push-hint').textContent = 'لتلقي الإشعارات على الآيفون: اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية» وافتح الموقع من الأيقونة.'; $('push-hint').hidden = false; }
+                if (ios && !standalone) showPushHint('لتلقي الإشعارات على الآيفون: اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية» وافتح الموقع من الأيقونة.');
                 return;
             }
-            try { swReg = await navigator.serviceWorker.register('/sw.js'); await navigator.serviceWorker.ready; } catch (e) { return; }
+            try { pushStep = 'register'; swReg = await navigator.serviceWorker.register('/sw.js'); await navigator.serviceWorker.ready; } catch (e) { pushFail(e); return; }
             $('btn-push').hidden = false;
-            refreshPushButton(true);
+            let perm = Notification.permission;
+            if (permPromise) { try { perm = await permPromise; } catch (e) { perm = Notification.permission; } }
+            await afterPermission(perm);
+            if (Notification.permission === 'default' && shouldAsk()) armFirstGesture();
         }
 
         function startPing() {
@@ -374,6 +422,7 @@
 
         async function enterPlatform() {
             if (!pendingPhone) { showView('view-login'); return; }
+            const permPromise = shouldAsk() ? askPermission() : null;   // يظهر طلب الإذن فوراً عند ضغطة الدخول
             $('btn-enter-platform').disabled = true;
             $('btn-enter-platform').textContent = 'جاري تسجيل الدخول...';
             try {
@@ -390,7 +439,7 @@
             showToast("✨ أهلاً بك " + pendingName);
             showView('view-app');
             calculate();
-            initPush();
+            setupPush(permPromise);
         }
 
         function logout() {
@@ -452,7 +501,7 @@
                 startPing();
                 showView('view-app');
                 calculate();
-                initPush();
+                setupPush(null);
             } else {
                 clearSession();
                 showView('view-login');
