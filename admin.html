@@ -60,6 +60,13 @@
             <div id="rates-status" style="margin-top: 10px; color: var(--muted); font-size: 13px;"></div>
         </section>
         <section class="card">
+            <h2>💸 عمولات الحوالات</h2>
+            <p class="sub">تُخصم العمولة من المبلغ المحوَّل، ثم يُحوَّل الباقي إلى الليرة السورية بسعر «المكتب يشتري بـ». العمولة = المبلغ × النسبة % + الرسم الثابت. اترك الحقل 0 لإلغائه.</p>
+            <div id="remit-rows"></div>
+            <button class="btn-block" id="btn-save-remit" style="margin-top: 16px;">حفظ العمولات</button>
+            <div id="remit-status" style="margin-top: 10px; color: var(--muted); font-size: 13px;"></div>
+        </section>
+        <section class="card">
             <h2>🔔 إشعارات للمستخدمين</h2>
             <p class="sub">تصل إلى شريط إشعارات موبايل المشتركين حتى لو كان الموقع مغلقاً. عدد المشتركين: <b id="push-count" style="color:var(--gold-light)">0</b></p>
             <div class="field"><input type="text" id="push-title" maxlength="80" value="تحديث أسعار الصرف"><label>عنوان الإشعار</label></div>
@@ -81,7 +88,9 @@
         const CUR_INFO = { USD: 'دولار أمريكي', USDT: 'تيثر USDT', EUR: 'يورو', LBP: 'ليرة لبنانية', JOD: 'دينار أردني', LYD: 'دينار ليبي', KWD: 'دينار كويتي' };
         const $ = id => document.getElementById(id);
         const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        const REMIT_INFO = { LBP: '🇱🇧 لبنان', JOD: '🇯🇴 الأردن', LYD: '🇱🇾 ليبيا', KWD: '🇰🇼 الكويت', EUR: '🇪🇺 أوروبا' };
         let currencies = [];
+        let remitCurrencies = [];
         let lastRates = null;
         
         function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3500); }
@@ -108,6 +117,26 @@
             $('btn-save-rates').disabled = true;
             try { await api('PUT', '/api/admin/rates', { rates: payload }); lastRates = payload; $('push-body').value = ratesText(); toast('تم حفظ الأسعار'); } catch (e) { toast('خطأ في الأرقام'); }
             $('btn-save-rates').disabled = false;
+        }
+
+        async function saveRemit() {
+            const payload = {};
+            for (const c of remitCurrencies) {
+                payload[c] = { pct: Number($(`remit-${c}-pct`).value || 0), fixed: Number($(`remit-${c}-fixed`).value || 0) };
+            }
+            $('btn-save-remit').disabled = true;
+            try { await api('PUT', '/api/admin/remit', { remit: payload }); $('remit-status').textContent = 'العمولات مفعّلة ويراها الزبائن الآن.'; toast('تم حفظ العمولات'); } catch (e) { toast('خطأ في الأرقام'); }
+            $('btn-save-remit').disabled = false;
+        }
+
+        function buildRemitRows(remit) {
+            $('remit-rows').innerHTML = remitCurrencies.map(c => `
+                <div class="rate-row">
+                    <div style="font-weight:900">${REMIT_INFO[c] || c} - <small>${c}</small></div>
+                    <div class="rate-cell"><span>نسبة العمولة (%)</span><input type="number" min="0" max="100" step="any" id="remit-${c}-pct" value="${remit?.[c]?.pct ?? 0}"></div>
+                    <div class="rate-cell"><span>رسم ثابت (بعملة ${c})</span><input type="number" min="0" step="any" id="remit-${c}-fixed" value="${remit?.[c]?.fixed ?? 0}"></div>
+                </div>`).join('');
+            $('remit-status').textContent = remit ? 'العمولات مفعّلة ويراها الزبائن.' : 'لم تُحفظ العمولات بعد — قسم الحوالات يظهر للزبائن «غير متاح» حتى تضغط حفظ.';
         }
 
         function ratesText() {
@@ -173,13 +202,14 @@
             const state = await api('GET', '/api/admin/state');
             currencies = state.currencies; lastRates = state.rates; $('push-count').textContent = state.pushSubscribers || 0;
             buildRateRows(state.rates);
+            remitCurrencies = state.remitCurrencies || []; buildRemitRows(state.remit);
             show('dash');
             await loadClients();
         }
 
         $('btn-login').onclick = login;
         $('btn-logout').onclick = async () => { try { await api('POST', '/api/admin/logout'); } catch (e) {} show('login'); };
-        $('clients-list').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (b) deleteClient(b.dataset.del); });$('btn-save-rates').onclick = saveRates;
+        $('clients-list').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (b) deleteClient(b.dataset.del); });$('btn-save-rates').onclick = saveRates;$('btn-save-remit').onclick = saveRemit;
         $('client-search').oninput = loadClients;
         $('btn-push-fill').onclick = () => { $('push-body').value = ratesText(); };
         $('btn-push-send').onclick = sendPush;

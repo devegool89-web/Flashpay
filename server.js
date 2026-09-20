@@ -26,6 +26,7 @@ if (ADMIN_PASSWORD.length < 12) {
 }
 
 const CURRENCIES = ['USD', 'USDT', 'EUR', 'LBP', 'JOD', 'LYD', 'KWD'];
+const REMIT_CURRENCIES = ['LBP', 'JOD', 'LYD', 'KWD', 'EUR']; // عملات بلدان الحوالات: لبنان، الأردن، ليبيا، الكويت، أوروبا
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_MAX_FAILS = 5;
@@ -69,11 +70,11 @@ async function saveDb(next) {
 function parseDb(text) {
   const db = JSON.parse(text);
   if (!db || typeof db !== 'object' || !Array.isArray(db.clients)) throw new Error('بنية البيانات غير صحيحة');
-  return { rates: db.rates ?? null, ratesUpdatedAt: db.ratesUpdatedAt ?? null, clients: db.clients, subs: (db.subs && typeof db.subs === 'object' && !Array.isArray(db.subs)) ? db.subs : {}, vapid: db.vapid ?? null };
+  return { rates: db.rates ?? null, ratesUpdatedAt: db.ratesUpdatedAt ?? null, clients: db.clients, subs: (db.subs && typeof db.subs === 'object' && !Array.isArray(db.subs)) ? db.subs : {}, vapid: db.vapid ?? null, remit: db.remit ?? null };
 }
 
 async function loadDb() {
-  const fresh = { rates: null, ratesUpdatedAt: null, clients: [], subs: {}, vapid: null };
+  const fresh = { rates: null, ratesUpdatedAt: null, remit: null, clients: [], subs: {}, vapid: null };
   if (USE_REDIS) {
     try {
       let text = await redisCmd(['GET', REDIS_KEY]);
@@ -121,6 +122,20 @@ function validateRates(input) {
     out[c] = { buy, sell };
   }
   return { rates: out };
+}
+
+// عمولة الحوالات لكل بلد: نسبة مئوية + رسم ثابت بعملة البلد
+function validateRemit(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return { error: 'remit_required', message: 'العمولات مطلوبة' };
+  const out = {};
+  for (const c of REMIT_CURRENCIES) {
+    const r = input[c];
+    if (!r || typeof r.pct !== 'number' || typeof r.fixed !== 'number') return { error: 'invalid_number', message: `عمولة ${c} غير صالحة` };
+    const pct = round6(r.pct), fixed = round6(r.fixed);
+    if (!(pct >= 0 && pct <= 100 && fixed >= 0 && fixed <= MAX_RATE)) return { error: 'out_of_range', message: `عمولة ${c} خارج المدى` };
+    out[c] = { pct, fixed };
+  }
+  return { remit: out };
 }
 
 // ===== Web Push (RFC 8030 / 8188 / 8291 / 8292) بدون مكتبات خارجية =====
@@ -373,7 +388,7 @@ async function handleAdmin(req, res, pathname, url) {
     return json(res, 200, { ok: true });
   }
 
-  if (pathname === '/api/admin/state') return json(res, 200, { currencies: CURRENCIES, rates: db.rates, ratesUpdatedAt: db.ratesUpdatedAt, pushSubscribers: Object.keys(db.subs || {}).length });
+  if (pathname === '/api/admin/state') return json(res, 200, { currencies: CURRENCIES, rates: db.rates, ratesUpdatedAt: db.ratesUpdatedAt, remitCurrencies: REMIT_CURRENCIES, remit: db.remit, pushSubscribers: Object.keys(db.subs || {}).length });
   if (pathname === '/api/admin/push/send') {
     if (method !== 'POST') return fail(res, 405, '', '');
     const b = await readJson(req);
@@ -391,6 +406,14 @@ async function handleAdmin(req, res, pathname, url) {
     return withWriteLock(async () => {
       const next = { ...db, rates: result.rates, ratesUpdatedAt: new Date().toISOString() };
       await saveDb(next); db = next; return json(res, 200, { rates: db.rates, ratesUpdatedAt: db.ratesUpdatedAt });
+    });
+  }
+  if (pathname === '/api/admin/remit' && method === 'PUT') {
+    const result = validateRemit((await readJson(req)).remit);
+    if (result.error) return fail(res, 400, result.error, result.message);
+    return withWriteLock(async () => {
+      const next = { ...db, remit: result.remit };
+      await saveDb(next); db = next; return json(res, 200, { remit: db.remit });
     });
   }
   if (pathname === '/api/admin/clients' && method === 'GET') {
@@ -425,7 +448,7 @@ async function handle(req, res) {
     return res.end(asset.body);
   }
 
-  if (pathname === '/api/rates') return json(res, 200, { rates: db.rates, updatedAt: db.ratesUpdatedAt });
+  if (pathname === '/api/rates') return json(res, 200, { rates: db.rates, updatedAt: db.ratesUpdatedAt, remit: db.remit });
 
   if (pathname === '/api/push/key') return json(res, 200, { key: vapidPublicKey(db.vapid) });
 
