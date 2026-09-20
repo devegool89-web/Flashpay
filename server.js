@@ -137,15 +137,22 @@ function isAllowedPushEndpoint(ep) {
   const h = u.hostname.toLowerCase();
   return PUSH_HOSTS.includes(h) || PUSH_SUFFIXES.some(x => h.endsWith(x));
 }
-function validSubscription(sub) {
-  if (!sub || typeof sub !== 'object' || !sub.keys || typeof sub.keys !== 'object') return false;
-  if (!isAllowedPushEndpoint(sub.endpoint)) return false;
+const normB64 = v => (typeof v === 'string' ? v.replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_') : v);
+function subscriptionProblem(sub) {
+  if (!sub || typeof sub !== 'object' || !sub.keys || typeof sub.keys !== 'object') return ['bad_body', 'بيانات الاشتراك ناقصة'];
+  if (typeof sub.endpoint !== 'string' || !sub.endpoint) return ['bad_endpoint', 'رابط الاشتراك مفقود'];
+  if (!isAllowedPushEndpoint(sub.endpoint)) {
+    let h = '?'; try { h = new URL(sub.endpoint).hostname; } catch { }
+    return ['bad_endpoint', 'نطاق غير مسموح: ' + h.slice(0, 60)];
+  }
   const { p256dh, auth } = sub.keys;
-  if (typeof p256dh !== 'string' || typeof auth !== 'string') return false;
-  if (!/^[A-Za-z0-9_-]+$/.test(p256dh) || !/^[A-Za-z0-9_-]+$/.test(auth)) return false;
+  if (typeof p256dh !== 'string' || typeof auth !== 'string' || !/^[A-Za-z0-9_-]+$/.test(p256dh) || !/^[A-Za-z0-9_-]+$/.test(auth)) return ['bad_keys', 'صيغة المفاتيح غير صحيحة'];
   const pk = fromB64u(p256dh), au = fromB64u(auth);
-  return pk.length === 65 && pk[0] === 4 && au.length === 16;
+  if (!(pk.length === 65 && pk[0] === 4)) return ['bad_keys', 'طول مفتاح p256dh=' + pk.length];
+  if (au.length !== 16) return ['bad_keys', 'طول مفتاح auth=' + au.length];
+  return null;
 }
+const validSubscription = sub => !subscriptionProblem(sub);
 const subId = endpoint => crypto.createHash('sha256').update(endpoint).digest('hex').slice(0, 32);
 
 function generateVapid() {
@@ -414,9 +421,11 @@ async function handle(req, res) {
   if (pathname === '/api/push/subscribe') {
     if (method !== 'POST') return fail(res, 405, '', '');
     const body = await readJson(req);
-    if (!body || !validSubscription(body.subscription)) return fail(res, 400, 'invalid_subscription', '');
+    const raw = body && body.subscription;
+    const sub = raw && raw.keys && typeof raw.keys === 'object' ? { ...raw, keys: { p256dh: normB64(raw.keys.p256dh), auth: normB64(raw.keys.auth) } } : raw;
+    const problem = subscriptionProblem(sub);
+    if (problem) { console.warn('push subscribe rejected:', problem[0], problem[1]); return fail(res, 400, problem[0], problem[1]); }
     const phone = normalizePhone(body.phone ?? '');
-    const sub = body.subscription;
     const id = subId(sub.endpoint);
     return withWriteLock(async () => {
       if (!db.subs[id] && Object.keys(db.subs).length >= MAX_SUBS) return fail(res, 503, 'full', '');
@@ -476,7 +485,10 @@ async function handle(req, res) {
 }
 
 const server = http.createServer(async (req, res) => {
-  try { await handle(req, res); } catch (err) { fail(res, 500, '', ''); }
+  try { await handle(req, res); } catch (err) {
+    console.error('request error:', req.method, req.url.split('?')[0], err && (err.message || err.status || err));
+    if (!res.headersSent) fail(res, (err && err.status) || 500, '', '');
+  }
 });
 if (require.main === module) {
   (async () => {

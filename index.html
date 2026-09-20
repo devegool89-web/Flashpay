@@ -282,10 +282,15 @@
         }
         async function currentSub() { try { return swReg ? await swReg.pushManager.getSubscription() : null; } catch (e) { return null; } }
         async function postSub(sub) {
+            let body;
+            try { body = JSON.stringify({ subscription: sub.toJSON(), phone: pendingPhone }); }
+            catch (e) { return { ok: false, why: 'toJSON: ' + (e.name || '') + ' ' + (e.message || '') }; }
             try {
-                const r = await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON(), phone: pendingPhone }) });
-                return r.ok;
-            } catch (e) { return false; }
+                const r = await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+                if (r.ok) return { ok: true };
+                let d = {}; try { d = await r.json(); } catch (e) {}
+                return { ok: false, why: 'HTTP ' + r.status + (d.error ? ' ' + d.error : '') + (d.message ? ' (' + d.message + ')' : '') };
+            } catch (e) { return { ok: false, why: 'شبكة: ' + (e.name || '') + ' ' + (e.message || '') }; }
         }
         function showPushHint(text) { $('push-hint').textContent = text; $('push-hint').hidden = false; }
         function pushFail(e) {
@@ -316,7 +321,8 @@
             if (sub && !sameKey(sub, keyBytes)) { await sub.unsubscribe(); sub = null; }
             if (!sub) { pushStep = 'subscribe'; sub = await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes }); }
             pushStep = 'save';
-            if (!(await postSub(sub))) throw new Error('السيرفر رفض حفظ الاشتراك');
+            const saved = await postSub(sub);
+            if (!saved.ok) throw new Error(saved.why);
             return sub;
         }
         async function afterPermission(perm) {
