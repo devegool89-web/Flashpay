@@ -38,6 +38,17 @@
         .status-offline .status-dot { background: #666; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
+        /* أقسام لوحة التحكم كقوائم منسدلة */
+        details.acc { padding: 0; overflow: hidden; }
+        details.acc > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 18px; user-select: none; }
+        details.acc > summary::-webkit-details-marker { display: none; }
+        details.acc > summary h2 { margin: 0; }
+        details.acc > summary::after { content: ''; flex: none; width: 10px; height: 10px; border-left: 2px solid var(--gold); border-bottom: 2px solid var(--gold); transform: rotate(-45deg); transition: transform .2s; margin-top: -4px; }
+        details.acc[open] > summary::after { transform: rotate(135deg); margin-top: 4px; }
+        details.acc[open] > summary { border-bottom: 1px dashed var(--line); }
+        details.acc > summary:focus-visible { outline: 2px solid var(--gold-light); outline-offset: -3px; border-radius: 22px; }
+        .acc-body { padding: 18px 18px 22px; }
+
         #toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #111; border: 1px solid var(--gold); border-radius: 16px; padding: 14px 22px; font-weight: 700; z-index: 50; transition: top 0.4s; }
         #toast.show { top: 18px; }
     </style>
@@ -54,33 +65,56 @@
 
     <main id="view-dash" class="wrap" hidden>
         <div class="topbar"><h1>لوحة التحكم</h1><button class="btn-ghost" id="btn-logout">تسجيل الخروج</button></div>
-        <section class="card">
-            <h2>أسعار الصرف اليومية</h2><div id="rates-rows"></div>
-            <button class="btn-block" id="btn-save-rates" style="margin-top: 16px;">حفظ الأسعار</button>
-            <div id="rates-status" style="margin-top: 10px; color: var(--muted); font-size: 13px;"></div>
-        </section>
-        <section class="card">
-            <h2>💸 عمولات الحوالات</h2>
-            <p class="sub">تُخصم العمولة من المبلغ المحوَّل، ثم يُحوَّل الباقي إلى الليرة السورية بسعر «المكتب يشتري بـ». العمولة = المبلغ × النسبة % + الرسم الثابت. اترك الحقل 0 لإلغائه.</p>
-            <div id="remit-rows"></div>
-            <button class="btn-block" id="btn-save-remit" style="margin-top: 16px;">حفظ العمولات</button>
-            <div id="remit-status" style="margin-top: 10px; color: var(--muted); font-size: 13px;"></div>
-        </section>
-        <section class="card">
-            <h2>🔔 إشعارات للمستخدمين</h2>
-            <p class="sub">تصل إلى شريط إشعارات موبايل المشتركين حتى لو كان الموقع مغلقاً. عدد المشتركين: <b id="push-count" style="color:var(--gold-light)">0</b></p>
-            <div class="field"><input type="text" id="push-title" maxlength="80" value="تحديث أسعار الصرف"><label>عنوان الإشعار</label></div>
-            <div class="field"><textarea id="push-body" rows="6" maxlength="400"></textarea><label>نص الإشعار</label></div>
-            <button type="button" class="btn-ghost btn-block" id="btn-push-fill">تعبئة النص من الأسعار الحالية</button>
-            <button type="button" class="btn-block" id="btn-push-send" style="margin-top: 12px;">إرسال الإشعار الآن</button>
-            <div id="push-status" style="margin-top: 10px; color: var(--muted); font-size: 13px;"></div>
-        </section>
-        <section class="card">
-            <h2>العملاء المسجلون: <span id="clients-total" style="color:var(--gold-light)">0</span></h2>
-            <p class="sub">يتم تحديث حالة الاتصال (نشط/غير متصل) تلقائياً كل 10 ثوانٍ.</p>
-            <div class="field"><input type="search" id="client-search"><label>بحث بالاسم أو الرقم</label></div>
-            <div id="clients-list"></div>
-        </section>
+
+        <details class="card acc" name="acc">
+            <summary><h2>أسعار الصرف اليومية</h2></summary>
+            <div class="acc-body">
+                <div id="rates-rows"></div>
+                <button class="btn-block" id="btn-save-rates" style="margin-top: 16px;">حفظ الأسعار</button>
+                <div id="rates-status" style="margin-top: 10px; color: var(--muted); font-size: 13px;"></div>
+            </div>
+        </details>
+
+        <details class="card acc" name="acc">
+            <summary><h2>💸 عمولات الحوالات</h2></summary>
+            <div class="acc-body">
+                <p class="sub">تُخصم العمولة من المبلغ المحوَّل، ثم يُحوَّل الباقي إلى الليرة السورية بسعر «المكتب يشتري بـ». العمولة = المبلغ × النسبة % + الرسم الثابت. اترك الحقل 0 لإلغائه.</p>
+                <div id="remit-rows"></div>
+                <button class="btn-block" id="btn-save-remit" style="margin-top: 16px;">حفظ العمولات</button>
+                <div id="remit-status" style="margin-top: 10px; color: var(--muted); font-size: 13px;"></div>
+            </div>
+        </details>
+
+        <details class="card acc" name="acc">
+            <summary><h2>💳 شام كاش</h2></summary>
+            <div class="acc-body">
+                <p class="sub">استلام حوالة شام كاش بالليرة السورية الجديدة وبالدولار. تُخصم العمولة من قيمة الحوالة ويستلم الزبون الباقي بنفس العملة. العمولة = المبلغ × النسبة % + الرسم الثابت. اترك الحقل 0 لإلغائه.</p>
+                <div id="sham-rows"></div>
+                <button class="btn-block" id="btn-save-sham" style="margin-top: 16px;">حفظ عمولات شام كاش</button>
+                <div id="sham-status" style="margin-top: 10px; color: var(--muted); font-size: 13px;"></div>
+            </div>
+        </details>
+
+        <details class="card acc" name="acc">
+            <summary><h2>🔔 إشعارات للمستخدمين</h2></summary>
+            <div class="acc-body">
+                <p class="sub">تصل إلى شريط إشعارات موبايل المشتركين حتى لو كان الموقع مغلقاً. عدد المشتركين: <b id="push-count" style="color:var(--gold-light)">0</b></p>
+                <div class="field"><input type="text" id="push-title" maxlength="80" value="تحديث أسعار الصرف"><label>عنوان الإشعار</label></div>
+                <div class="field"><textarea id="push-body" rows="6" maxlength="400"></textarea><label>نص الإشعار</label></div>
+                <button type="button" class="btn-ghost btn-block" id="btn-push-fill">تعبئة النص من الأسعار الحالية</button>
+                <button type="button" class="btn-block" id="btn-push-send" style="margin-top: 12px;">إرسال الإشعار الآن</button>
+                <div id="push-status" style="margin-top: 10px; color: var(--muted); font-size: 13px;"></div>
+            </div>
+        </details>
+
+        <details class="card acc" name="acc">
+            <summary><h2>العملاء المسجلون: <span id="clients-total" style="color:var(--gold-light)">0</span></h2></summary>
+            <div class="acc-body">
+                <p class="sub">يتم تحديث حالة الاتصال (نشط/غير متصل) تلقائياً كل 10 ثوانٍ.</p>
+                <div class="field"><input type="search" id="client-search"><label>بحث بالاسم أو الرقم</label></div>
+                <div id="clients-list"></div>
+            </div>
+        </details>
     </main>
     <div id="toast"></div>
 
@@ -89,8 +123,10 @@
         const $ = id => document.getElementById(id);
         const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
         const REMIT_INFO = { LBP: '🇱🇧 لبنان', JOD: '🇯🇴 الأردن', LYD: '🇱🇾 ليبيا', KWD: '🇰🇼 الكويت', EUR: '🇪🇺 أوروبا' };
+        const SHAM_INFO = { SYP: '🇸🇾 ليرة سورية جديدة', USD: '🇺🇸 دولار أمريكي' };
         let currencies = [];
         let remitCurrencies = [];
+        let shamCurrencies = [];
         let lastRates = null;
         
         function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3500); }
@@ -119,25 +155,25 @@
             $('btn-save-rates').disabled = false;
         }
 
-        async function saveRemit() {
-            const payload = {};
-            for (const c of remitCurrencies) {
-                payload[c] = { pct: Number($(`remit-${c}-pct`).value || 0), fixed: Number($(`remit-${c}-fixed`).value || 0) };
-            }
-            $('btn-save-remit').disabled = true;
-            try { await api('PUT', '/api/admin/remit', { remit: payload }); $('remit-status').textContent = 'العمولات مفعّلة ويراها الزبائن الآن.'; toast('تم حفظ العمولات'); } catch (e) { toast('خطأ في الأرقام'); }
-            $('btn-save-remit').disabled = false;
-        }
-
-        function buildRemitRows(remit) {
-            $('remit-rows').innerHTML = remitCurrencies.map(c => `
+        // جدول عمولات (نسبة % + رسم ثابت لكل عملة) — يُستخدم للحوالات ولشام كاش
+        function buildFeeRows(prefix, list, info, table) {
+            $(`${prefix}-rows`).innerHTML = list.map(c => `
                 <div class="rate-row">
-                    <div style="font-weight:900">${REMIT_INFO[c] || c} - <small>${c}</small></div>
-                    <div class="rate-cell"><span>نسبة العمولة (%)</span><input type="number" min="0" max="100" step="any" id="remit-${c}-pct" value="${remit?.[c]?.pct ?? 0}"></div>
-                    <div class="rate-cell"><span>رسم ثابت (بعملة ${c})</span><input type="number" min="0" step="any" id="remit-${c}-fixed" value="${remit?.[c]?.fixed ?? 0}"></div>
+                    <div style="font-weight:900">${info[c] || c} - <small>${c}</small></div>
+                    <div class="rate-cell"><span>نسبة العمولة (%)</span><input type="number" min="0" max="100" step="any" id="${prefix}-${c}-pct" value="${table?.[c]?.pct ?? 0}"></div>
+                    <div class="rate-cell"><span>رسم ثابت (بعملة ${c})</span><input type="number" min="0" step="any" id="${prefix}-${c}-fixed" value="${table?.[c]?.fixed ?? 0}"></div>
                 </div>`).join('');
-            $('remit-status').textContent = remit ? 'العمولات مفعّلة ويراها الزبائن.' : 'لم تُحفظ العمولات بعد — قسم الحوالات يظهر للزبائن «غير متاح» حتى تضغط حفظ.';
+            $(`${prefix}-status`).textContent = table ? 'العمولات مفعّلة ويراها الزبائن.' : 'لم تُحفظ العمولات بعد — يظهر القسم للزبائن «غير متاح» حتى تضغط حفظ.';
         }
+        async function saveFees(prefix, list, url, key, doneMsg) {
+            const payload = {};
+            for (const c of list) payload[c] = { pct: Number($(`${prefix}-${c}-pct`).value || 0), fixed: Number($(`${prefix}-${c}-fixed`).value || 0) };
+            const btn = $(`btn-save-${prefix}`); btn.disabled = true;
+            try { await api('PUT', url, { [key]: payload }); $(`${prefix}-status`).textContent = 'العمولات مفعّلة ويراها الزبائن الآن.'; toast(doneMsg); } catch (e) { toast('خطأ في الأرقام'); }
+            btn.disabled = false;
+        }
+        const saveRemit = () => saveFees('remit', remitCurrencies, '/api/admin/remit', 'remit', 'تم حفظ العمولات');
+        const saveSham = () => saveFees('sham', shamCurrencies, '/api/admin/shamcash', 'shamcash', 'تم حفظ عمولات شام كاش');
 
         function ratesText() {
             if (!lastRates) return '';
@@ -202,14 +238,15 @@
             const state = await api('GET', '/api/admin/state');
             currencies = state.currencies; lastRates = state.rates; $('push-count').textContent = state.pushSubscribers || 0;
             buildRateRows(state.rates);
-            remitCurrencies = state.remitCurrencies || []; buildRemitRows(state.remit);
+            remitCurrencies = state.remitCurrencies || []; buildFeeRows('remit', remitCurrencies, REMIT_INFO, state.remit);
+            shamCurrencies = state.shamCurrencies || []; buildFeeRows('sham', shamCurrencies, SHAM_INFO, state.shamcash);
             show('dash');
             await loadClients();
         }
 
         $('btn-login').onclick = login;
         $('btn-logout').onclick = async () => { try { await api('POST', '/api/admin/logout'); } catch (e) {} show('login'); };
-        $('clients-list').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (b) deleteClient(b.dataset.del); });$('btn-save-rates').onclick = saveRates;$('btn-save-remit').onclick = saveRemit;
+        $('clients-list').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (b) deleteClient(b.dataset.del); });$('btn-save-rates').onclick = saveRates;$('btn-save-remit').onclick = saveRemit;$('btn-save-sham').onclick = saveSham;
         $('client-search').oninput = loadClients;
         $('btn-push-fill').onclick = () => { $('push-body').value = ratesText(); };
         $('btn-push-send').onclick = sendPush;

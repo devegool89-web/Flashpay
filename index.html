@@ -92,7 +92,8 @@
 
 
         /* قسم الحوالات */
-        .nav-tabs .tab-btn { font-size: 16px; }
+        .nav-tabs .tab-btn { font-size: 14px; padding: 14px 2px; white-space: nowrap; }
+        @media (max-width: 350px) { .nav-tabs .tab-btn { font-size: 12.5px; } }
         .remit-lines { margin-top: 22px; border: 1px solid #222; border-radius: 16px; background: rgba(0,0,0,0.45); padding: 2px 16px; }
         .remit-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 0; border-top: 1px dashed rgba(255,153,0,0.2); font-size: 14px; color: var(--text-sec); }
         .remit-line:first-child { border-top: none; }
@@ -194,6 +195,7 @@
             <div class="tabs nav-tabs" role="group" aria-label="أقسام المنصة">
                 <button type="button" class="tab-btn active" id="nav-exchange">صرف العملات</button>
                 <button type="button" class="tab-btn" id="nav-remit">الحوالات</button>
+                <button type="button" class="tab-btn" id="nav-sham">شام كاش</button>
             </div>
             <div id="sec-exchange">
             <div class="tabs">
@@ -253,6 +255,29 @@
                     <div class="text-result" id="remit-words">صفر ليرة سورية</div>
                 </div>
                 <div class="remit-note">تُخصم العمولة من المبلغ المحوَّل، ثم يُحوَّل الباقي إلى الليرة السورية بسعر الصرف المعتمد.</div>
+            </div>
+
+            <div id="sec-sham" hidden>
+                <div class="input-group">
+                    <select class="form-control" id="sham-currency">
+                        <option value="SYP">🇸🇾 ليرة سورية جديدة (SYP)</option>
+                        <option value="USD">🇺🇸 دولار أمريكي (USD)</option>
+                    </select>
+                    <label for="sham-currency">عملة حوالة شام كاش</label>
+                </div>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="sham-amount" placeholder="0.00" inputmode="decimal" min="0" step="any">
+                    <label for="sham-amount" id="sham-amount-label">قيمة الحوالة</label>
+                </div>
+                <div class="remit-lines">
+                    <div class="remit-line"><span id="sham-fee-label">العمولة</span><b id="sham-fee">—</b></div>
+                </div>
+                <div class="result-box">
+                    <div style="color: rgba(255,255,255,0.7); font-size: 16px; margin-bottom: 10px; font-weight: bold;">المبلغ الذي ستستلمه</div>
+                    <div><span class="result-amount" id="sham-total">0</span> <span style="font-size: 22px; color: var(--gold-light);" id="sham-cur">SYP</span></div>
+                    <div class="text-result" id="sham-words">صفر ليرة سورية</div>
+                </div>
+                <div class="remit-note">تُخصم العمولة من قيمة حوالة شام كاش، والباقي هو المبلغ الذي تستلمه بنفس عملة الحوالة.</div>
             </div>
             <button type="button" class="push-btn" id="btn-push" hidden>🔔 تفعيل إشعارات الأسعار</button>
             <div class="push-hint" id="push-hint" hidden></div>
@@ -606,7 +631,7 @@
         function logout() {
             clearSession(); clearInterval(pingInterval);
             pendingPhone = null; pendingName = null;
-            $('name-input').value = ""; $('phone-input').value = ""; $('amount').value = ""; $('remit-amount').value = ""; setSection('exchange');
+            $('name-input').value = ""; $('phone-input').value = ""; $('amount').value = ""; $('remit-amount').value = ""; $('sham-amount').value = ""; setSection('exchange');
             showView('view-login');
         }
 
@@ -619,22 +644,60 @@
                 const d = await r.json();
                 if (d && d.rates) { rates = d.rates; }
                 remit = (d && d.remit) || null;
+                sham = (d && d.shamcash) || null;
             } catch (e) {}
             calculate();
             calculateRemit();
+            calculateSham();
         }
 
 
         let remit = null;
         let currentSection = 'exchange';
 
+        const SECTIONS = ['exchange', 'remit', 'sham'];
         function setSection(name) {
             currentSection = name;
-            $('sec-exchange').hidden = name !== 'exchange';
-            $('sec-remit').hidden = name !== 'remit';
-            $('nav-exchange').classList.toggle('active', name === 'exchange');
-            $('nav-remit').classList.toggle('active', name === 'remit');
+            for (const s of SECTIONS) {
+                $('sec-' + s).hidden = s !== name;
+                $('nav-' + s).classList.toggle('active', s === name);
+            }
             if (name === 'remit') calculateRemit();
+            if (name === 'sham') calculateSham();
+        }
+
+        let sham = null;
+        function calculateSham() {
+            const cur = $('sham-currency').value;
+            const isSyp = cur === 'SYP';
+            const amount = parseFloat($('sham-amount').value);
+            const fmt = (n, max) => new Intl.NumberFormat('ar-SY', { maximumFractionDigits: max }).format(n);
+            const money = n => new Intl.NumberFormat('ar-SY', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+            const round2 = n => Math.round(n * 100 + 1e-9) / 100;
+            // words: نص يظهر تحت النتيجة، أو null لإخفائه (الدولار لا يحتاج تفقيطاً)
+            const set = (feeLabel, fee, total, words) => {
+                $('sham-fee-label').textContent = feeLabel; $('sham-fee').textContent = fee; $('sham-total').textContent = total;
+                $('sham-words').hidden = words === null; if (words !== null) $('sham-words').textContent = words;
+            };
+            $('sham-amount-label').textContent = `قيمة الحوالة (${cur})`;
+            $('sham-cur').textContent = cur;
+
+            const rule = sham && sham[cur] ? sham[cur] : null;
+            if (!rule) return set('العمولة', '—', '0', 'خدمة شام كاش غير متاحة حالياً');
+
+            const parts = [];
+            if (rule.pct > 0) parts.push(fmt(rule.pct, 4) + '%');
+            if (rule.fixed > 0) parts.push(fmt(rule.fixed, 4) + ' ' + cur);
+            const feeLabel = 'العمولة' + (parts.length ? ' (' + parts.join(' + ') + ')' : ' (بدون عمولة)');
+
+            if (!isFinite(amount) || amount <= 0) return set(feeLabel, '—', '0', isSyp ? 'صفر ليرة سورية' : null);
+            if (amount > MAX_AMOUNT) return set(feeLabel, '—', '0', 'المبلغ أكبر من الحد المسموح');
+
+            const fee = round2(amount * rule.pct / 100 + rule.fixed);
+            const net = round2(amount - fee);
+            const feeText = money(fee) + ' ' + cur;
+            if (net <= 0) return set(feeLabel, feeText, '0', 'المبلغ أقل من العمولة أو يساويها');
+            set(feeLabel, feeText, money(net), isSyp ? numberToArabicWords(net) : null);
         }
 
         function calculateRemit() {
@@ -696,7 +759,8 @@
 
         $('btn-login').addEventListener('click', handleLogin);$('phone-input').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });$('task-fb').addEventListener('click', () => markTask('fb'));$('task-wa').addEventListener('click', () => markTask('wa'));$('btn-enter-platform').addEventListener('click', enterPlatform);$('btn-push').addEventListener('click', onPushClick);$('btn-logout').addEventListener('click', logout);
         $('btn-buy').addEventListener('click', () => { currentMode = 'buy'; calculate(); });$('btn-sell').addEventListener('click', () => { currentMode = 'sell'; calculate(); });
-        $('nav-exchange').addEventListener('click', () => setSection('exchange'));$('nav-remit').addEventListener('click', () => setSection('remit'));
+        $('nav-exchange').addEventListener('click', () => setSection('exchange'));$('nav-remit').addEventListener('click', () => setSection('remit'));$('nav-sham').addEventListener('click', () => setSection('sham'));
+        $('sham-currency').addEventListener('change', calculateSham);$('sham-amount').addEventListener('input', calculateSham);
         $('remit-country').addEventListener('change', calculateRemit);$('remit-amount').addEventListener('input', calculateRemit);
         $('currency').addEventListener('change', calculate);$('amount').addEventListener('input', calculate);
 

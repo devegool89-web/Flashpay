@@ -26,6 +26,8 @@ if (ADMIN_PASSWORD.length < 12) {
 }
 
 const CURRENCIES = ['USD', 'USDT', 'EUR', 'LBP', 'JOD', 'LYD', 'KWD'];
+const SHAM_CURRENCIES = ['SYP', 'USD']; // شام كاش: الليرة السورية الجديدة والدولار
+const MAX_FEE = 1e9;
 const REMIT_CURRENCIES = ['LBP', 'JOD', 'LYD', 'KWD', 'EUR']; // عملات بلدان الحوالات: لبنان، الأردن، ليبيا، الكويت، أوروبا
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
@@ -70,11 +72,11 @@ async function saveDb(next) {
 function parseDb(text) {
   const db = JSON.parse(text);
   if (!db || typeof db !== 'object' || !Array.isArray(db.clients)) throw new Error('بنية البيانات غير صحيحة');
-  return { rates: db.rates ?? null, ratesUpdatedAt: db.ratesUpdatedAt ?? null, clients: db.clients, subs: (db.subs && typeof db.subs === 'object' && !Array.isArray(db.subs)) ? db.subs : {}, vapid: db.vapid ?? null, remit: db.remit ?? null };
+  return { rates: db.rates ?? null, ratesUpdatedAt: db.ratesUpdatedAt ?? null, clients: db.clients, subs: (db.subs && typeof db.subs === 'object' && !Array.isArray(db.subs)) ? db.subs : {}, vapid: db.vapid ?? null, remit: db.remit ?? null, shamcash: db.shamcash ?? null };
 }
 
 async function loadDb() {
-  const fresh = { rates: null, ratesUpdatedAt: null, remit: null, clients: [], subs: {}, vapid: null };
+  const fresh = { rates: null, ratesUpdatedAt: null, remit: null, shamcash: null, clients: [], subs: {}, vapid: null };
   if (USE_REDIS) {
     try {
       let text = await redisCmd(['GET', REDIS_KEY]);
@@ -124,19 +126,21 @@ function validateRates(input) {
   return { rates: out };
 }
 
-// عمولة الحوالات لكل بلد: نسبة مئوية + رسم ثابت بعملة البلد
-function validateRemit(input) {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) return { error: 'remit_required', message: 'العمولات مطلوبة' };
+// جدول عمولات: لكل عملة نسبة مئوية + رسم ثابت بنفس العملة (يُستخدم للحوالات ولشام كاش)
+function validateFeeTable(input, currencies, maxFixed) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return { error: 'fees_required', message: 'العمولات مطلوبة' };
   const out = {};
-  for (const c of REMIT_CURRENCIES) {
+  for (const c of currencies) {
     const r = input[c];
     if (!r || typeof r.pct !== 'number' || typeof r.fixed !== 'number') return { error: 'invalid_number', message: `عمولة ${c} غير صالحة` };
     const pct = round6(r.pct), fixed = round6(r.fixed);
-    if (!(pct >= 0 && pct <= 100 && fixed >= 0 && fixed <= MAX_RATE)) return { error: 'out_of_range', message: `عمولة ${c} خارج المدى` };
+    if (!(pct >= 0 && pct <= 100 && fixed >= 0 && fixed <= maxFixed)) return { error: 'out_of_range', message: `عمولة ${c} خارج المدى` };
     out[c] = { pct, fixed };
   }
-  return { remit: out };
+  return { table: out };
 }
+const validateRemit = input => validateFeeTable(input, REMIT_CURRENCIES, MAX_RATE);
+const validateShamcash = input => validateFeeTable(input, SHAM_CURRENCIES, MAX_FEE);
 
 // ===== Web Push (RFC 8030 / 8188 / 8291 / 8292) بدون مكتبات خارجية =====
 const PUSH_HOSTS = ['fcm.googleapis.com', 'android.googleapis.com', 'updates.push.services.mozilla.com', 'web.push.apple.com'];
@@ -388,7 +392,7 @@ async function handleAdmin(req, res, pathname, url) {
     return json(res, 200, { ok: true });
   }
 
-  if (pathname === '/api/admin/state') return json(res, 200, { currencies: CURRENCIES, rates: db.rates, ratesUpdatedAt: db.ratesUpdatedAt, remitCurrencies: REMIT_CURRENCIES, remit: db.remit, pushSubscribers: Object.keys(db.subs || {}).length });
+  if (pathname === '/api/admin/state') return json(res, 200, { currencies: CURRENCIES, rates: db.rates, ratesUpdatedAt: db.ratesUpdatedAt, remitCurrencies: REMIT_CURRENCIES, remit: db.remit, shamCurrencies: SHAM_CURRENCIES, shamcash: db.shamcash, pushSubscribers: Object.keys(db.subs || {}).length });
   if (pathname === '/api/admin/push/send') {
     if (method !== 'POST') return fail(res, 405, '', '');
     const b = await readJson(req);
@@ -412,8 +416,16 @@ async function handleAdmin(req, res, pathname, url) {
     const result = validateRemit((await readJson(req)).remit);
     if (result.error) return fail(res, 400, result.error, result.message);
     return withWriteLock(async () => {
-      const next = { ...db, remit: result.remit };
+      const next = { ...db, remit: result.table };
       await saveDb(next); db = next; return json(res, 200, { remit: db.remit });
+    });
+  }
+  if (pathname === '/api/admin/shamcash' && method === 'PUT') {
+    const result = validateShamcash((await readJson(req)).shamcash);
+    if (result.error) return fail(res, 400, result.error, result.message);
+    return withWriteLock(async () => {
+      const next = { ...db, shamcash: result.table };
+      await saveDb(next); db = next; return json(res, 200, { shamcash: db.shamcash });
     });
   }
   if (pathname === '/api/admin/clients' && method === 'GET') {
@@ -448,7 +460,7 @@ async function handle(req, res) {
     return res.end(asset.body);
   }
 
-  if (pathname === '/api/rates') return json(res, 200, { rates: db.rates, updatedAt: db.ratesUpdatedAt, remit: db.remit });
+  if (pathname === '/api/rates') return json(res, 200, { rates: db.rates, updatedAt: db.ratesUpdatedAt, remit: db.remit, shamcash: db.shamcash });
 
   if (pathname === '/api/push/key') return json(res, 200, { key: vapidPublicKey(db.vapid) });
 
