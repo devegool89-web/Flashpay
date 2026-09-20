@@ -17,6 +17,7 @@
         .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
         .field { position: relative; margin-bottom: 20px; }
         .field label { position: absolute; right: 16px; top: -10px; background: #0e0e12; padding: 0 8px; color: var(--gold); font-size: 12px; font-weight: 700; border: 1px solid var(--line); border-radius: 5px; }
+        textarea { width: 100%; background: rgba(0,0,0,0.6); border: 1px solid #333; color: #fff; padding: 15px 16px; border-radius: 14px; font-size: 15px; font-weight: 700; line-height: 1.7; resize: vertical; font-family: inherit; }
         input { width: 100%; background: rgba(0,0,0,0.6); border: 1px solid #333; color: #fff; padding: 15px 16px; border-radius: 14px; font-size: 16px; font-weight: 700; }
         button { font-family: inherit; cursor: pointer; padding: 14px 22px; border: none; border-radius: 14px; font-size: 16px; font-weight: 900; color: #000; background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light)); }
         .btn-block { width: 100%; } .btn-ghost { background: transparent; color: #fff; border: 1px solid #444; padding: 10px; }
@@ -59,6 +60,15 @@
             <div id="rates-status" style="margin-top: 10px; color: var(--muted); font-size: 13px;"></div>
         </section>
         <section class="card">
+            <h2>🔔 إشعارات للمستخدمين</h2>
+            <p class="sub">تصل إلى شريط إشعارات موبايل المشتركين حتى لو كان الموقع مغلقاً. عدد المشتركين: <b id="push-count" style="color:var(--gold-light)">0</b></p>
+            <div class="field"><input type="text" id="push-title" maxlength="80" value="تحديث أسعار الصرف"><label>عنوان الإشعار</label></div>
+            <div class="field"><textarea id="push-body" rows="6" maxlength="400"></textarea><label>نص الإشعار</label></div>
+            <button type="button" class="btn-ghost btn-block" id="btn-push-fill">تعبئة النص من الأسعار الحالية</button>
+            <button type="button" class="btn-block" id="btn-push-send" style="margin-top: 12px;">إرسال الإشعار الآن</button>
+            <div id="push-status" style="margin-top: 10px; color: var(--muted); font-size: 13px;"></div>
+        </section>
+        <section class="card">
             <h2>العملاء المسجلون: <span id="clients-total" style="color:var(--gold-light)">0</span></h2>
             <p class="sub">يتم تحديث حالة الاتصال (نشط/غير متصل) تلقائياً كل 10 ثوانٍ.</p>
             <div class="field"><input type="search" id="client-search"><label>بحث بالاسم أو الرقم</label></div>
@@ -70,7 +80,9 @@
     <script nonce="__NONCE__">
         const CUR_INFO = { USD: 'دولار أمريكي', USDT: 'تيثر USDT', EUR: 'يورو', LBP: 'ليرة لبنانية', JOD: 'دينار أردني', LYD: 'دينار ليبي', KWD: 'دينار كويتي' };
         const $ = id => document.getElementById(id);
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
         let currencies = [];
+        let lastRates = null;
         
         function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3500); }
         function show(v) { $('view-login').hidden = v !== 'login'; $('view-dash').hidden = v !== 'dash'; }
@@ -94,8 +106,30 @@
                 payload[c] = { buy: parseFloat($(`rate-${c}-buy`).value), sell: parseFloat($(`rate-${c}-sell`).value) };
             }
             $('btn-save-rates').disabled = true;
-            try { await api('PUT', '/api/admin/rates', { rates: payload }); toast('تم حفظ الأسعار'); } catch (e) { toast('خطأ في الأرقام'); }
+            try { await api('PUT', '/api/admin/rates', { rates: payload }); lastRates = payload; $('push-body').value = ratesText(); toast('تم حفظ الأسعار'); } catch (e) { toast('خطأ في الأرقام'); }
             $('btn-save-rates').disabled = false;
+        }
+
+        function ratesText() {
+            if (!lastRates) return '';
+            const lines = ['المكتب يشتري / يبيع:'];
+            for (const c of currencies) { const r = lastRates[c]; if (r) lines.push(`${CUR_INFO[c]}: ${r.buy} / ${r.sell}`); }
+            return lines.join('\n');
+        }
+        async function sendPush() {
+            const title = $('push-title').value.trim(), body = $('push-body').value.trim();
+            if (!title || !body) return toast('اكتب العنوان والنص أولاً');
+            const n = Number($('push-count').textContent) || 0;
+            if (n === 0) return toast('لا يوجد مشتركون بعد');
+            if (!confirm('إرسال الإشعار إلى ' + n + ' مشترك؟')) return;
+            $('btn-push-send').disabled = true;
+            try {
+                const r = await api('POST', '/api/admin/push/send', { title, body });
+                $('push-status').textContent = `أُرسل إلى ${r.sent} من ${r.total}` + (r.failed ? ` — فشل ${r.failed}` : '') + (r.removed ? ` — حُذف ${r.removed} اشتراك منتهي` : '');
+                toast('تم الإرسال');
+                const st = await api('GET', '/api/admin/state'); $('push-count').textContent = st.pushSubscribers;
+            } catch (e) { toast('تعذّر الإرسال'); }
+            $('btn-push-send').disabled = false;
         }
 
         function buildRateRows(rates) {
@@ -112,20 +146,20 @@
             $('clients-list').innerHTML = list.length === 0 ? '<div style="text-align:center;color:#666;padding:20px;">لا يوجد عملاء</div>' : list.map(c => `
                 <div class="client">
                     <div class="meta">
-                        <div class="name">${c.name || 'بدون اسم'}</div>
-                        <div class="phone">${c.phone}</div>
+                        <div class="name">${esc(c.name) || 'بدون اسم'}</div>
+                        <div class="phone">${esc(c.phone)}</div>
                         <div class="status-badge ${c.isOnline ? 'status-online' : 'status-offline'}">
                             <div class="status-dot"></div> ${c.isOnline ? 'نشط الآن يتابع الأسعار' : 'غير متصل'}
                         </div>
                         <div class="date">تاريخ التسجيل: ${new Date(c.createdAt).toLocaleString('ar-SY')}</div>
                     </div>
-                    <button class="btn-danger" onclick="deleteClient('${c.id}')">حذف</button>
+                    <button class="btn-danger" data-del="${esc(c.id)}">حذف</button>
                 </div>`).join('');
         }
 
         async function loadClients() {
             const q = $('client-search').value.trim();
-            const data = await api('GET', '/api/admin/clients' + (q ? '?q=' + q : ''));
+            const data = await api('GET', '/api/admin/clients' + (q ? '?q=' + encodeURIComponent(q) : ''));
             renderClients(data.clients, data.total);
         }
 
@@ -137,15 +171,18 @@
 
         async function loadDash() {
             const state = await api('GET', '/api/admin/state');
-            currencies = state.currencies;
+            currencies = state.currencies; lastRates = state.rates; $('push-count').textContent = state.pushSubscribers || 0;
             buildRateRows(state.rates);
             show('dash');
             await loadClients();
         }
 
         $('btn-login').onclick = login;
-        $('btn-logout').onclick = async () => { await api('POST', '/api/admin/logout'); show('login'); };$('btn-save-rates').onclick = saveRates;
+        $('btn-logout').onclick = async () => { try { await api('POST', '/api/admin/logout'); } catch (e) {} show('login'); };
+        $('clients-list').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (b) deleteClient(b.dataset.del); });$('btn-save-rates').onclick = saveRates;
         $('client-search').oninput = loadClients;
+        $('btn-push-fill').onclick = () => { $('push-body').value = ratesText(); };
+        $('btn-push-send').onclick = sendPush;
 
         setInterval(() => { if (!$('view-dash').hidden) loadClients(); }, 10000);
 

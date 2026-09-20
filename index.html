@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FLASH PAY | المنصة المالية الفاخرة</title>
+    <meta name="theme-color" content="#050507">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" type="image/png" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/icon-192.png">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style nonce="__NONCE__">
         :root { --gold-primary: #FF9900; --gold-light: #FFD700; --gold-dark: #CC5500; --bg-deep: #050507; --glass-bg: rgba(10, 10, 12, 0.75); --text-main: #ffffff; --text-sec: #a0a0a0; }
@@ -11,29 +15,56 @@
         :focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px; }
         [hidden] { display: none !important; }
         body { background-color: var(--bg-deep); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; position: relative; overflow-x: hidden; padding-top: 40px; padding-bottom: 40px; }
-        .bg-logo-watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85vmin; height: 85vmin; max-width: 800px; max-height: 800px; z-index: -3; pointer-events: none; opacity: 0.15; }
-        .ambient-glow { position: fixed; top: 10%; left: 50%; width: 100vw; height: 100vh; transform: translateX(-50%); background: radial-gradient(circle, rgba(255, 153, 0, 0.1) 0%, transparent 50%); z-index: -2; pointer-events: none; }
+        .bg-logo-watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(.94); width: 85vmin; height: 85vmin; max-width: 800px; max-height: 800px; z-index: -3; pointer-events: none; opacity: .1; animation: wmBreath 9s ease-in-out infinite; will-change: transform, opacity, filter; }
+        .bg-logo-watermark svg { width: 100%; height: 100%; display: block; }
+        .wm-spin { transform-origin: 150px 150px; animation: spin 70s linear infinite reverse; }
+        @keyframes wmBreath {
+            0%, 100% { transform: translate(-50%, -50%) scale(.94); opacity: .09; filter: hue-rotate(0deg) brightness(.9); }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: .24; filter: hue-rotate(-16deg) brightness(1.4); }
+        }
+        .ambient-glow { position: fixed; top: 10%; left: 50%; width: 100vw; height: 100vh; transform: translateX(-50%); background: radial-gradient(circle, rgba(255, 153, 0, 0.12) 0%, transparent 50%); z-index: -2; pointer-events: none; animation: ambient 7s ease-in-out infinite alternate; }
+        @keyframes ambient { from { opacity: .45; } to { opacity: 1; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .view-section, .main-wrapper { display: none; width: 100%; z-index: 10; }
         .view-section { max-width: 480px; padding: 20px; margin: 0 auto; }
         .view-section.active { display: block; }
         .main-wrapper.active { display: flex; flex-direction: column; align-items: center; gap: 30px; padding: 20px; max-width: 1000px; margin: 0 auto; }
         @media (min-width: 1024px) { .main-wrapper.active { display: grid; grid-template-columns: 600px 320px; justify-content: center; align-items: start; gap: 40px; padding: 0; } }
-        .video-logo-wrapper { position: relative; width: 160px; height: 160px; margin: 0 auto 25px auto; border-radius: 50%; background: #0d0d0d; box-shadow: 0 0 50px rgba(255, 153, 0, 0.4); z-index: 5; }
+        .video-logo-wrapper { position: relative; width: 160px; height: 160px; margin: 0 auto 25px auto; border-radius: 50%; z-index: 5; flex: none; transition: width .5s, height .5s, margin .5s; animation: logoGlow 3s ease-in-out infinite; }
         body.view-app-active .video-logo-wrapper { width: 120px; height: 120px; margin-bottom: 15px; }
-        .fade-promo { text-align: center; color: var(--gold-light); font-size: 14px; font-weight: bold; margin-bottom: 20px; }
+        @keyframes logoGlow {
+            0%, 100% { box-shadow: 0 0 28px rgba(255,153,0,.28), 0 0 60px rgba(255,153,0,.12); }
+            50% { box-shadow: 0 0 52px rgba(255,170,0,.7), 0 0 110px rgba(255,153,0,.3); }
+        }
+        .logo-arc { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, rgba(255,255,255,0) 0deg, rgba(150,150,150,.55) 45deg, #ffffff 120deg, #FFD700 195deg, #FFD700 208deg, rgba(255,215,0,0) 208.6deg); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4.5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4.5px)); animation: spin 4s linear infinite; }
+        .logo-svg { position: absolute; inset: 4px; width: calc(100% - 8px); height: calc(100% - 8px); display: block; }
+        .bolt { filter: drop-shadow(0 0 5px #FFD700) drop-shadow(0 0 12px rgba(255,153,0,.7)); animation: boltPulse 2.4s ease-in-out infinite; }
+        @keyframes boltPulse {
+            0%, 100% { filter: drop-shadow(0 0 4px #FFD700) drop-shadow(0 0 8px rgba(255,153,0,.5)); }
+            50% { filter: drop-shadow(0 0 10px #FFE066) drop-shadow(0 0 26px rgba(255,153,0,.95)); }
+        }
+        .bolt-halo { animation: haloPulse 2.4s ease-in-out infinite; transform-origin: 150px 150px; }
+        @keyframes haloPulse { 0%, 100% { opacity: .55; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.12); } }
+        .ring-text { filter: drop-shadow(0 0 3px rgba(255,153,0,.9)); animation: textGlow 3s ease-in-out infinite; }
+        @keyframes textGlow { 0%, 100% { filter: drop-shadow(0 0 2px rgba(255,153,0,.6)); } 50% { filter: drop-shadow(0 0 7px rgba(255,200,0,1)); } }
+        .fade-promo { text-align: center; color: var(--gold-light); font-size: 14px; font-weight: bold; margin-bottom: 20px; animation: promoFade 4.5s ease-in-out infinite; }
+        @keyframes promoFade { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
         .marquee-container { width: 100%; max-width: 1200px; margin: 0 auto 35px auto; display: flex; flex-direction: column; align-items: center; }
         .marquee-title { color: var(--gold-light); font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
-        .live-dot { width: 10px; height: 10px; background-color: #00e676; border-radius: 50%; box-shadow: 0 0 12px #00e676; }
+        .live-dot { width: 10px; height: 10px; background-color: #00e676; border-radius: 50%; box-shadow: 0 0 12px #00e676; animation: livePulse 1.6s ease-in-out infinite; }
+        @keyframes livePulse { 0%, 100% { opacity: .6; box-shadow: 0 0 4px #00e676; } 50% { opacity: 1; box-shadow: 0 0 16px #00e676; } }
         .marquee-wrapper { position: relative; width: 100%; border-top: 1px solid rgba(255,153,0,0.2); border-bottom: 1px solid rgba(255,153,0,0.2); background: rgba(0,0,0,0.5); overflow: hidden; }
-        .countries-marquee { padding: 12px 0; white-space: nowrap; direction: ltr; }
-        .marquee-content { display: inline-block; font-size: 15px; font-weight: 900; color: var(--gold-primary); }
+        .countries-marquee { padding: 12px 0; white-space: nowrap; direction: ltr; overflow: hidden; }
+        .marquee-track { display: inline-flex; animation: marquee 22s linear infinite; will-change: transform; }
+        .marquee-content { flex: none; display: inline-block; font-size: 15px; font-weight: 900; color: var(--gold-primary); }
         .marquee-content span { margin: 0 25px; opacity: 0.8; }
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
         .premium-card { background: var(--glass-bg); backdrop-filter: blur(35px); border: 1px solid rgba(255, 153, 0, 0.2); border-radius: 28px; padding: 30px 20px; box-shadow: 0 30px 60px rgba(0,0,0,0.9); text-align: center; width: 100%; }
         h2 { color: var(--gold-light); margin-bottom: 15px; font-size: 26px; font-weight: 900; }
         p.desc { color: var(--text-sec); font-size: 14px; margin-bottom: 30px; line-height: 1.6; }
         .input-group { margin-bottom: 25px; text-align: right; position: relative; width: 100%; }
         .input-group label { position: absolute; right: 20px; top: -10px; background: #0a0a0c; padding: 0 10px; color: var(--gold-primary); font-size: 13px; font-weight: 700; border-radius: 5px; border: 1px solid rgba(255, 153, 0, 0.3); z-index: 2; }
-        select.form-control { background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FF9900%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: left 20px top 50%; background-size: 12px auto; padding-left: 40px; }
+        select.form-control { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FF9900%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: left 20px top 50%; background-size: 12px auto; padding-left: 40px; }
         .form-control { width: 100%; background: rgba(0,0,0,0.6); border: 1px solid #333; color: #fff; padding: 18px 20px; border-radius: 16px; font-size: 18px; font-weight: 700; }
         .btn-primary { width: 100%; padding: 18px; background: linear-gradient(135deg, var(--gold-dark), var(--gold-primary), var(--gold-light)); color: #000; border: none; border-radius: 16px; font-size: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 10px 30px rgba(255, 153, 0, 0.3); }
         .btn-primary:disabled { background: #1a1a1a; color: #555; cursor: not-allowed; }
@@ -45,23 +76,60 @@
         .result-box { margin-top: 30px; background: #000; border: 1px solid var(--gold-dark); padding: 25px 15px; border-radius: 20px; text-align: center; }
         .result-amount { font-size: 36px; font-weight: 900; color: var(--gold-light); }
         .text-result { color: var(--gold-primary); font-size: 15px; font-weight: 800; margin-top: 20px; border-top: 1px dashed rgba(255,153,0,0.3); padding-top: 20px; }
+.features { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 12px; margin-bottom: 22px; border: 1px solid rgba(255,215,0,.28); border-radius: 22px; background: rgba(255,215,0,.06); color: var(--gold-light); font-weight: 900; font-size: 15px; text-align: center; line-height: 1.5; }
+        .features span { flex: 1; }
+        .features i { width: 3px; height: 20px; background: var(--gold-light); border-radius: 2px; flex: none; }
+        .push-btn { width: 100%; margin-top: 22px; padding: 14px; border-radius: 14px; border: 1px solid rgba(255,153,0,.45); background: rgba(255,153,0,.08); color: var(--gold-light); font-size: 15px; font-weight: 800; cursor: pointer; }
+        .push-btn.on { border-color: #00e676; color: #00e676; background: rgba(0,230,118,.06); }
+        .push-btn:disabled { opacity: .5; cursor: wait; }
+        .push-hint { margin-top: 12px; color: var(--text-sec); font-size: 12px; line-height: 1.7; text-align: center; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }
         .toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(15,15,15,0.95); border: 1px solid var(--gold-primary); border-radius: 18px; padding: 20px 30px; color: #fff; font-weight: bold; z-index: 1000; transition: top 0.6s; width: 90%; max-width: 450px; text-align: center; }
         .toast.show { top: 30px; }
     </style>
 </head>
 <body id="app-body">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+        <defs>
+            <radialGradient id="discGrad" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#1d1d21"/><stop offset="1" stop-color="#0a0a0c"/></radialGradient>
+            <radialGradient id="boltGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFD700" stop-opacity=".55"/><stop offset="1" stop-color="#FFD700" stop-opacity="0"/></radialGradient>
+            <path id="fpTextPath" d="M56.03,115.8 A100,100 0 0 1 243.97,115.8" fill="none"/>
+            <g id="fp-ring">
+                <circle cx="150" cy="150" r="114" fill="none" stroke="#FF9900" stroke-width="2.2" stroke-dasharray="9 7"/>
+                <text class="ring-text" font-family="Tajawal, sans-serif" font-size="29" font-weight="900" letter-spacing="4" fill="#FFD700"><textPath href="#fpTextPath" startOffset="50%" text-anchor="middle">FLASH PAY</textPath></text>
+            </g>
+            <g id="fp-symbols">
+                <circle cx="150" cy="150" r="75" fill="none" stroke="#FF9900" stroke-width="1.6" stroke-dasharray="0.1 5" stroke-linecap="round"/>
+                <g font-family="Tajawal, sans-serif" font-size="19" font-weight="900" fill="#FF9900" text-anchor="middle">
+                    <g transform="rotate(20 150 150)"><text x="150" y="82">₽</text></g>
+                    <g transform="rotate(71.4 150 150)"><text x="150" y="82">€</text></g>
+                    <g transform="rotate(122.8 150 150)"><text x="150" y="82">$</text></g>
+                    <g transform="rotate(174.2 150 150)"><text x="150" y="82">£</text></g>
+                    <g transform="rotate(225.6 150 150)"><text x="150" y="82">₿</text></g>
+                    <g transform="rotate(277 150 150)"><text x="150" y="82">¥</text></g>
+                    <g transform="rotate(328.4 150 150)"><text x="150" y="82">₹</text></g>
+                </g>
+            </g>
+        </defs>
+    </svg>
+
     <div class="ambient-glow"></div>
-    <div class="bg-logo-watermark">
-        <svg viewBox="0 0 300 300" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="150" cy="150" r="125" fill="none" stroke="#FF9900" stroke-width="2" stroke-dasharray="10 8" />
-            <text x="150" y="160" fill="#FFD700" font-size="40" font-weight="900" text-anchor="middle">FLASH</text>
+    <div class="bg-logo-watermark" aria-hidden="true">
+        <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+            <use href="#fp-ring"/>
+            <g class="wm-spin"><use href="#fp-symbols"/></g>
+            <path d="M148,91 L110,160 L138,160 L130,225 L179,136 L150,136 Z" fill="#FFB300"/>
         </svg>
     </div>
 
     <div class="video-logo-wrapper" id="main-logo">
-        <svg viewBox="0 0 300 300" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="150" cy="150" r="148" fill="#0d0d0d" />
-            <path d="M155,90 L115,160 L145,160 L135,225 L185,135 L155,135 Z" fill="#ffffff" />
+        <div class="logo-arc"></div>
+        <svg class="logo-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FLASH PAY">
+            <circle cx="150" cy="150" r="148" fill="url(#discGrad)"/>
+            <use href="#fp-ring"/>
+            <use href="#fp-symbols"/>
+            <circle class="bolt-halo" cx="150" cy="150" r="72" fill="url(#boltGlow)"/>
+            <path class="bolt" d="M148,91 L110,160 L138,160 L130,225 L179,136 L150,136 Z" fill="#ffffff"/>
         </svg>
     </div>
 
@@ -69,8 +137,9 @@
         <div class="marquee-title"><div class="live-dot"></div>استلام الحوالات من هذه البلدان</div>
         <div class="marquee-wrapper">
             <div class="countries-marquee">
-                <div class="marquee-content">
-                    <span>🇸🇾 سوريا</span> • <span>🇱🇧 لبنان</span> • <span>🇯🇴 الأردن</span> • <span>🇱🇾 ليبيا</span> • <span>🇰🇼 الكويت</span> • <span>🇪🇺 أوروبا</span>
+                <div class="marquee-track">
+                    <div class="marquee-content"><span>🇸🇾 سوريا</span> • <span>🇱🇧 لبنان</span> • <span>🇯🇴 الأردن</span> • <span>🇱🇾 ليبيا</span> • <span>🇰🇼 الكويت</span> • <span>🇪🇺 أوروبا</span> • </div>
+                    <div class="marquee-content" aria-hidden="true"><span>🇸🇾 سوريا</span> • <span>🇱🇧 لبنان</span> • <span>🇯🇴 الأردن</span> • <span>🇱🇾 ليبيا</span> • <span>🇰🇼 الكويت</span> • <span>🇪🇺 أوروبا</span> • </div>
                 </div>
             </div>
         </div>
@@ -105,6 +174,7 @@
 
     <div id="view-app" class="main-wrapper">
         <div class="premium-card" style="text-align: right;">
+            <div class="features"><span>⚡ سرعة فائقة</span><i></i><span>🛡️ أمان وموثوقية</span><i></i><span>📉 عمولات منافسة</span></div>
             <div class="tabs">
                 <button type="button" class="tab-btn active" id="btn-buy">بيع للمكتب (USD)</button>
                 <button type="button" class="tab-btn" id="btn-sell">شراء من المكتب (USD)</button>
@@ -134,6 +204,8 @@
                 <div><span class="result-amount" id="total-result">0</span> <span style="font-size: 22px; color: var(--gold-light);">SYP</span></div>
                 <div class="text-result" id="text-result">صفر ليرة سورية</div>
             </div>
+            <button type="button" class="push-btn" id="btn-push" hidden>🔔 تفعيل إشعارات الأسعار</button>
+            <div class="push-hint" id="push-hint" hidden></div>
             <button type="button" id="btn-logout" style="background: none; border: none; color: #999; margin-top: 30px; cursor: pointer; font-size: 14px; width: 100%;">تسجيل الخروج</button>
         </div>
         <div class="ads-wrapper"></div>
@@ -189,6 +261,73 @@
         let pendingName = null, pendingPhone = null;
         let fbDone = false, waDone = false, waRequired = false;
         let pingInterval = null;
+        let swReg = null, pushInitDone = false;
+        const PUSH_OK = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+
+        function urlB64ToBytes(b64) {
+            const s = (b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+            return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+        }
+        function sameKey(sub, bytes) {
+            const cur = sub.options && sub.options.applicationServerKey;
+            if (!cur) return true;
+            const a = new Uint8Array(cur);
+            return a.length === bytes.length && a.every((v, i) => v === bytes[i]);
+        }
+        async function currentSub() { try { return swReg ? await swReg.pushManager.getSubscription() : null; } catch (e) { return null; } }
+        async function postSub(sub) {
+            try {
+                const r = await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON(), phone: pendingPhone }) });
+                return r.ok;
+            } catch (e) { return false; }
+        }
+        async function refreshPushButton(sync) {
+            const sub = await currentSub();
+            const on = !!sub && Notification.permission === 'granted';
+            $('btn-push').textContent = on ? '🔔 الإشعارات مفعّلة (اضغط للإيقاف)' : '🔔 تفعيل إشعارات الأسعار';
+            $('btn-push').classList.toggle('on', on);
+            if (on && sync && pendingPhone) postSub(sub);
+        }
+        async function enablePush() {
+            const perm = await Notification.requestPermission();
+            if (perm !== 'granted') { showToast('⚠️ لم يتم السماح بالإشعارات. فعّلها من إعدادات المتصفح لهذا الموقع'); return; }
+            const kr = await fetch('/api/push/key'); const kd = await kr.json();
+            const keyBytes = urlB64ToBytes(kd.key);
+            let sub = await currentSub();
+            if (sub && !sameKey(sub, keyBytes)) { await sub.unsubscribe(); sub = null; }
+            if (!sub) sub = await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes });
+            if (await postSub(sub)) showToast('✅ تم تفعيل إشعارات الأسعار');
+            else showToast('⚠️ تعذّر حفظ الاشتراك، حاول مرة أخرى');
+        }
+        async function disablePush() {
+            const sub = await currentSub();
+            if (!sub) return;
+            const endpoint = sub.endpoint;
+            await sub.unsubscribe();
+            try { await fetch('/api/push/unsubscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint }) }); } catch (e) {}
+            showToast('تم إيقاف الإشعارات');
+        }
+        async function onPushClick() {
+            const btn = $('btn-push'); btn.disabled = true;
+            try {
+                const sub = await currentSub();
+                if (sub && Notification.permission === 'granted') await disablePush(); else await enablePush();
+            } catch (e) { showToast('⚠️ تعذّر تفعيل الإشعارات على هذا المتصفح'); }
+            btn.disabled = false;
+            refreshPushButton(false);
+        }
+        async function initPush() {
+            if (pushInitDone) return; pushInitDone = true;
+            if (!PUSH_OK) {
+                const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+                const standalone = navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+                if (ios && !standalone) { $('push-hint').textContent = 'لتلقي الإشعارات على الآيفون: اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية» وافتح الموقع من الأيقونة.'; $('push-hint').hidden = false; }
+                return;
+            }
+            try { swReg = await navigator.serviceWorker.register('/sw.js'); await navigator.serviceWorker.ready; } catch (e) { return; }
+            $('btn-push').hidden = false;
+            refreshPushButton(true);
+        }
 
         function startPing() {
             clearInterval(pingInterval);
@@ -251,6 +390,7 @@
             showToast("✨ أهلاً بك " + pendingName);
             showView('view-app');
             calculate();
+            initPush();
         }
 
         function logout() {
@@ -299,7 +439,7 @@
 
         $('btn-login').addEventListener('click', handleLogin);$('phone-input').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
         $('task-fb').addEventListener('click', () => markTask('fb'));$('task-wa').addEventListener('click', () => markTask('wa'));
-        $('btn-enter-platform').addEventListener('click', enterPlatform);$('btn-logout').addEventListener('click', logout);
+        $('btn-enter-platform').addEventListener('click', enterPlatform);$('btn-push').addEventListener('click', onPushClick);$('btn-logout').addEventListener('click', logout);
         $('btn-buy').addEventListener('click', () => { currentMode = 'buy'; calculate(); });$('btn-sell').addEventListener('click', () => { currentMode = 'sell'; calculate(); });
         $('currency').addEventListener('change', calculate);$('amount').addEventListener('input', calculate);
 
@@ -312,6 +452,7 @@
                 startPing();
                 showView('view-app');
                 calculate();
+                initPush();
             } else {
                 clearSession();
                 showView('view-login');
