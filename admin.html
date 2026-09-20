@@ -29,7 +29,6 @@
         .client .phone { font-size: 16px; direction: ltr; text-align: right; }
         .client .date { color: var(--muted); font-size: 11px; }
         
-        /* تصميم زر التتبع الحي */
         .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 900; width: fit-content; }
         .status-online { background: rgba(0, 230, 118, 0.1); color: #00e676; border: 1px solid #00e676; }
         .status-offline { background: rgba(160, 160, 160, 0.1); color: #a0a0a0; border: 1px solid #444; }
@@ -74,7 +73,7 @@
         let currencies = [];
         
         function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3500); }
-        function show(v) { $('view-login').hidden = v !== 'login';$('view-dash').hidden = v !== 'dash'; }
+        function show(v) { $('view-login').hidden = v !== 'login'; $('view-dash').hidden = v !== 'dash'; }
 
         async function api(method, url, body) {
             const opt = { method, headers: {} };
@@ -86,7 +85,7 @@
         }
 
         async function login() {
-            try { await api('POST', '/api/admin/login', { password: $('login-password').value }); await loadDash(); } catch (e) {$('login-status').textContent = 'كلمة المرور خاطئة'; }
+            try { await api('POST', '/api/admin/login', { password: $('login-password').value }); await loadDash(); } catch (e) { $('login-status').textContent = 'كلمة المرور خاطئة'; }
         }
 
         async function saveRates() {
@@ -148,7 +147,6 @@
         $('btn-logout').onclick = async () => { await api('POST', '/api/admin/logout'); show('login'); };$('btn-save-rates').onclick = saveRates;
         $('client-search').oninput = loadClients;
 
-        // تحديث آلي لحالة اتصال العملاء كل 10 ثوانٍ إذا كانت لوحة التحكم مفتوحة
         setInterval(() => { if (!$('view-dash').hidden) loadClients(); }, 10000);
 
         (async function init() { try { await loadDash(); } catch (e) { show('login'); } })();
