@@ -76,7 +76,7 @@
         .result-box { margin-top: 30px; background: #000; border: 1px solid var(--gold-dark); padding: 25px 15px; border-radius: 20px; text-align: center; }
         .result-amount { font-size: 36px; font-weight: 900; color: var(--gold-light); }
         .text-result { color: var(--gold-primary); font-size: 15px; font-weight: 800; margin-top: 20px; border-top: 1px dashed rgba(255,153,0,0.3); padding-top: 20px; }
-.features { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 12px; margin-bottom: 22px; border: 1px solid rgba(255,215,0,.28); border-radius: 22px; background: rgba(255,215,0,.06); color: var(--gold-light); font-weight: 900; font-size: 15px; text-align: center; line-height: 1.5; }
+        .features { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 12px; margin-bottom: 22px; border: 1px solid rgba(255,215,0,.28); border-radius: 22px; background: rgba(255,215,0,.06); color: var(--gold-light); font-weight: 900; font-size: 15px; text-align: center; line-height: 1.5; }
         .features span { flex: 1; }
         .features i { width: 3px; height: 20px; background: var(--gold-light); border-radius: 2px; flex: none; }
         .push-btn { width: 100%; margin-top: 22px; padding: 14px; border-radius: 14px; border: 1px solid rgba(255,153,0,.45); background: rgba(255,153,0,.08); color: var(--gold-light); font-size: 15px; font-weight: 800; cursor: pointer; }
@@ -218,34 +218,88 @@
         const MAX_AMOUNT = 1e9;
         const SESSION_KEY = 'flashpay_current_user';
 
+        const UNITS_M = ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
+        const UNITS_F = ["", "إحدى", "اثنتان", "ثلاث", "أربع", "خمس", "ست", "سبع", "ثمان", "تسع"];
+        const TEENS_M = ["عشرة", "أحد عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"];
+        const TEENS_F = ["عشر", "إحدى عشرة", "اثنتا عشرة", "ثلاث عشرة", "أربع عشرة", "خمس عشرة", "ست عشرة", "سبع عشرة", "ثماني عشرة", "تسع عشرة"];
+        const TENS = ["", "عشرة", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"];
+        const HUNDREDS = ["", "مائة", "مائتان", "ثلاثمائة", "أربعمائة", "خمسمائة", "ستمائة", "سبعمائة", "ثمانمائة", "تسعمائة"];
         const SCALES = [
-            { value: 1e9, one: "مليار", two: "ملياران", few: "مليارات", many: "ملياراً" },
-            { value: 1e6, one: "مليون", two: "مليونان", few: "ملايين", many: "مليوناً" },
-            { value: 1e3, one: "ألف", two: "ألفان", few: "آلاف", many: "ألفاً" }
+            { value: 1e9, one: "مليار", two: "ملياران", twoC: "مليارا", few: "مليارات", many: "ملياراً" },
+            { value: 1e6, one: "مليون", two: "مليونان", twoC: "مليونا", few: "ملايين", many: "مليوناً" },
+            { value: 1e3, one: "ألف", two: "ألفان", twoC: "ألفا", few: "آلاف", many: "ألفاً" }
         ];
 
         function joinAnd(parts) { return parts.map((p, i) => (i ? "و" + p : p)).join(" "); }
+
         function under100(n, fem) {
-            const u = fem ? ["", "إحدى", "اثنتان", "ثلاث", "أربع", "خمس", "ست", "سبع", "ثمان", "تسع"] : ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
-            const t_arr = ["", "عشرة", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"];
+            const u = fem ? UNITS_F : UNITS_M;
             if (n < 10) return u[n];
-            if (n < 20) return (fem ? ["عشر", "إحدى عشرة", "اثنتا عشرة", "ثلاث عشرة", "أربع عشرة", "خمس عشرة", "ست عشرة", "سبع عشرة", "ثماني عشرة", "تسع عشرة"] : ["عشرة", "أحد عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"])[n - 10];
+            if (n < 20) return (fem ? TEENS_F : TEENS_M)[n - 10];
             const t = Math.floor(n / 10), o = n % 10;
-            return o ? u[o] + " و" + t_arr[t] : t_arr[t];
+            return o ? u[o] + " و" + TENS[t] : TENS[t];
         }
+
         function upTo999(n, fem) {
             const h = Math.floor(n / 100), r = n % 100, p = [];
-            if (h) p.push(["", "مائة", "مائتان", "ثلاثمائة", "أربعمائة", "خمسمائة", "ستمائة", "سبعمائة", "ثمانمائة", "تسعمائة"][h]);
+            if (h) p.push(HUNDREDS[h]);
             if (r) p.push(under100(r, fem));
             return joinAnd(p);
         }
-        function numberToArabicWords(total) {
-            if (!isFinite(total) || total <= 0) return "صفر ليرة سورية";
-            const whole = Math.floor(total);
-            if (whole === 0) return "صفر ليرة سورية";
+
+        function scaleText(c, s) {
+            const d = c % 100;
+            if (c === 1) return s.one;
+            if (c === 2) return s.two;
+            if (c === 200) return "مائتا " + s.one;
+            if (d >= 3 && d <= 10) return upTo999(c, false) + " " + s.few;
+            if (d >= 11) return upTo999(c, false) + " " + s.many;
+            return upTo999(c, false) + " " + s.one;
+        }
+
+        function liraPhrase(whole) {
             if (whole === 1) return "ليرة سورية واحدة";
             if (whole === 2) return "ليرتان سوريتان";
-            return upTo999(whole, true) + " ليرة سورية";
+            let n = whole;
+            const pre = [];
+            let last = null;
+            for (const s of SCALES) {
+                const c = Math.floor(n / s.value);
+                n -= c * s.value;
+                if (c) { pre.push(scaleText(c, s)); last = { c, s, idx: pre.length - 1 }; }
+            }
+            const rem = n;
+            if (rem === 0) {
+                if (last && last.c === 2) pre[last.idx] = last.s.twoC;
+                return joinAnd(pre) + " ليرة سورية";
+            }
+            const d = rem % 100;
+            if (d === 1 || d === 2) {
+                const h = Math.floor(rem / 100);
+                if (h) pre.push(HUNDREDS[h]);
+                pre.push(d === 1 ? "ليرة سورية واحدة" : "ليرتان سوريتان");
+                return joinAnd(pre);
+            }
+            pre.push(rem === 200 ? "مائتا" : upTo999(rem, true));
+            return joinAnd(pre) + (d >= 3 && d <= 10 ? " ليرات سورية" : " ليرة سورية");
+        }
+
+        function qirshPhrase(p) {
+            if (p === 1) return "قرش واحد";
+            if (p === 2) return "قرشان";
+            if (p <= 10) return upTo999(p, false) + " قروش";
+            return upTo999(p, false) + " قرشاً";
+        }
+
+        function numberToArabicWords(total) {
+            if (!isFinite(total) || total <= 0) return "صفر ليرة سورية";
+            const cents = Math.round(total * 100);
+            if (cents === 0) return "صفر ليرة سورية";
+            const whole = Math.floor(cents / 100), p = cents % 100;
+            const parts = [];
+            if (whole) parts.push(liraPhrase(whole));
+            if (p) parts.push(qirshPhrase(p));
+            return joinAnd(parts);
         }
 
         function normalizePhone(raw) {
@@ -350,7 +404,7 @@
             let sub = await currentSub();
             if (sub && !sameKey(sub, keyBytes)) { await sub.unsubscribe(); sub = null; }
             if (!sub) { pushStep = 'subscribe'; sub = await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes }); }
-            if (!sub) {   // بعض المتصفحات تُرجع null: نعيد المحاولة بالقراءة ثم نُبلغ بالحالة الحقيقية
+            if (!sub) {   
                 pushStep = 'subscribe-empty';
                 for (let i = 0; i < 5 && !sub; i++) { await new Promise(r => setTimeout(r, 400)); sub = await currentSub(); }
                 if (!sub) {
@@ -404,7 +458,6 @@
             btn.disabled = false;
             refreshPushButton();
         }
-        // permPromise: نتيجة طلب الإذن الذي بدأ مباشرة عند ضغطة المستخدم (إن وُجد)
         async function setupPush(permPromise) {
             if (pushSetupDone) return; pushSetupDone = true;
             if (!PUSH_OK) {
@@ -466,7 +519,7 @@
 
         async function enterPlatform() {
             if (!pendingPhone) { showView('view-login'); return; }
-            const permPromise = shouldAsk() ? askPermission() : null;   // يظهر طلب الإذن فوراً عند ضغطة الدخول
+            const permPromise = shouldAsk() ? askPermission() : null;  
             $('btn-enter-platform').disabled = true;
             $('btn-enter-platform').textContent = 'جاري تسجيل الدخول...';
             try {
@@ -530,9 +583,7 @@
             $('total-result').textContent = new Intl.NumberFormat('ar-SY', { minimumFractionDigits: 2 }).format(totalValue);$('text-result').textContent = numberToArabicWords(totalValue);
         }
 
-        $('btn-login').addEventListener('click', handleLogin);$('phone-input').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
-        $('task-fb').addEventListener('click', () => markTask('fb'));$('task-wa').addEventListener('click', () => markTask('wa'));
-        $('btn-enter-platform').addEventListener('click', enterPlatform);$('btn-push').addEventListener('click', onPushClick);$('btn-logout').addEventListener('click', logout);
+        $('btn-login').addEventListener('click', handleLogin);$('phone-input').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });$('task-fb').addEventListener('click', () => markTask('fb'));$('task-wa').addEventListener('click', () => markTask('wa'));$('btn-enter-platform').addEventListener('click', enterPlatform);$('btn-push').addEventListener('click', onPushClick);$('btn-logout').addEventListener('click', logout);
         $('btn-buy').addEventListener('click', () => { currentMode = 'buy'; calculate(); });$('btn-sell').addEventListener('click', () => { currentMode = 'sell'; calculate(); });
         $('currency').addEventListener('change', calculate);$('amount').addEventListener('input', calculate);
 
