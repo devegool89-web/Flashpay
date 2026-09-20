@@ -320,6 +320,14 @@
             let sub = await currentSub();
             if (sub && !sameKey(sub, keyBytes)) { await sub.unsubscribe(); sub = null; }
             if (!sub) { pushStep = 'subscribe'; sub = await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes }); }
+            if (!sub) {   // بعض المتصفحات تُرجع null: نعيد المحاولة بالقراءة ثم نُبلغ بالحالة الحقيقية
+                pushStep = 'subscribe-empty';
+                for (let i = 0; i < 5 && !sub; i++) { await new Promise(r => setTimeout(r, 400)); sub = await currentSub(); }
+                if (!sub) {
+                    let st = '?'; try { st = await swReg.pushManager.permissionState({ userVisibleOnly: true }); } catch (e) { st = (e && e.name) || 'error'; }
+                    throw new Error('المتصفح لم يُرجع اشتراكاً بعد subscribe (Notification=' + Notification.permission + ', push=' + st + ')');
+                }
+            }
             pushStep = 'save';
             const saved = await postSub(sub);
             if (!saved.ok) throw new Error(saved.why);
