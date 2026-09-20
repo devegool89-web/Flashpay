@@ -98,6 +98,8 @@
         .remit-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 0; border-top: 1px dashed rgba(255,153,0,0.2); font-size: 14px; color: var(--text-sec); }
         .remit-line:first-child { border-top: none; }
         .remit-line b { color: #fff; font-weight: 800; text-align: left; }
+        .wa-order { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 18px; padding: 16px; border-radius: 16px; background: linear-gradient(135deg, var(--gold-dark), var(--gold-primary), var(--gold-light)); color: #000; font-size: 17px; font-weight: 900; text-decoration: none; box-shadow: 0 10px 30px rgba(255, 153, 0, 0.3); }
+        .wa-order svg { width: 22px; height: 22px; fill: currentColor; flex: none; }
         .remit-note { margin-top: 14px; color: var(--text-sec); font-size: 12px; line-height: 1.7; text-align: center; }
 
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }
@@ -254,6 +256,7 @@
                     <div><span class="result-amount" id="remit-total">0</span> <span style="font-size: 22px; color: var(--gold-light);">SYP</span></div>
                     <div class="text-result" id="remit-words">صفر ليرة سورية</div>
                 </div>
+                <a id="remit-wa" class="wa-order" target="_blank" rel="noopener noreferrer" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.031 0C5.385 0 0 5.386 0 12.035c0 2.124.553 4.195 1.604 6.01L.068 24l6.111-1.604A11.968 11.968 0 0012.031 24c6.646 0 12.035-5.386 12.035-12.035C24.066 5.386 18.677 0 12.031 0zm7.14 17.15c-.297.838-1.5 1.542-2.127 1.625-.566.075-1.3.16-3.666-.826-2.85-1.187-4.66-4.103-4.798-4.29-.138-.187-1.144-1.523-1.144-2.905 0-1.382.721-2.062.977-2.338.256-.276.557-.345.743-.345.186 0 .372.001.539.009.182.008.428-.073.67.51.246.593.839 2.05.914 2.198.075.148.125.321.032.506-.093.185-.14.3-.279.467-.14.167-.294.364-.42.485-.14.136-.286.286-.126.562.16.276.71 1.173 1.527 1.905 1.054.945 1.936 1.238 2.212 1.376.276.138.438.115.6-.07.162-.185.696-.811.882-1.088.186-.277.372-.23.626-.138.254.092 1.603.755 1.879.893.276.138.461.207.528.322.067.115.067.667-.23 1.505z"/></svg><span>اطلب الحوالة عبر واتساب</span></a>
                 <div class="remit-note">تُخصم العمولة من المبلغ المحوَّل، ثم يُحوَّل الباقي إلى الليرة السورية بسعر الصرف المعتمد.</div>
             </div>
 
@@ -277,6 +280,7 @@
                     <div><span class="result-amount" id="sham-total">0</span> <span style="font-size: 22px; color: var(--gold-light);" id="sham-cur">SYP</span></div>
                     <div class="text-result" id="sham-words">صفر ليرة سورية</div>
                 </div>
+                <a id="sham-wa" class="wa-order" target="_blank" rel="noopener noreferrer" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.031 0C5.385 0 0 5.386 0 12.035c0 2.124.553 4.195 1.604 6.01L.068 24l6.111-1.604A11.968 11.968 0 0012.031 24c6.646 0 12.035-5.386 12.035-12.035C24.066 5.386 18.677 0 12.031 0zm7.14 17.15c-.297.838-1.5 1.542-2.127 1.625-.566.075-1.3.16-3.666-.826-2.85-1.187-4.66-4.103-4.798-4.29-.138-.187-1.144-1.523-1.144-2.905 0-1.382.721-2.062.977-2.338.256-.276.557-.345.743-.345.186 0 .372.001.539.009.182.008.428-.073.67.51.246.593.839 2.05.914 2.198.075.148.125.321.032.506-.093.185-.14.3-.279.467-.14.167-.294.364-.42.485-.14.136-.286.286-.126.562.16.276.71 1.173 1.527 1.905 1.054.945 1.936 1.238 2.212 1.376.276.138.438.115.6-.07.162-.185.696-.811.882-1.088.186-.277.372-.23.626-.138.254.092 1.603.755 1.879.893.276.138.461.207.528.322.067.115.067.667-.23 1.505z"/></svg><span>اطلب استلام الحوالة عبر واتساب</span></a>
                 <div class="remit-note">تُخصم العمولة من قيمة حوالة شام كاش، والباقي هو المبلغ الذي تستلمه بنفس عملة الحوالة.</div>
             </div>
             <button type="button" class="push-btn" id="btn-push" hidden>🔔 تفعيل إشعارات الأسعار</button>
@@ -303,7 +307,7 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <script nonce="__NONCE__">
-        const CONFIG = { FACEBOOK_URL: "https://www.facebook.com/share/1P16rTSUqd/", WHATSAPP_URL: "" };
+        const CONFIG = { FACEBOOK_URL: "https://www.facebook.com/share/1P16rTSUqd/", WHATSAPP_URL: "", OFFICE_WA: "963930102339" };
         const MAX_AMOUNT = 1e9;
         const SESSION_KEY = 'flashpay_current_user';
 
@@ -655,6 +659,15 @@
         let remit = null;
         let currentSection = 'exchange';
 
+        const REMIT_NAMES = { LBP: 'لبنان', JOD: 'الأردن', LYD: 'ليبيا', KWD: 'الكويت', EUR: 'أوروبا' };
+        const SHAM_NAMES = { SYP: 'ليرة سورية جديدة', USD: 'دولار أمريكي' };
+        // يبني رابط واتساب برسالة جاهزة؛ lines = null يخفي الزر (لا حساب صالح)
+        function setWa(id, lines) {
+            const a = $(id);
+            if (!lines) { a.hidden = true; a.removeAttribute('href'); return; }
+            a.href = 'https://wa.me/' + CONFIG.OFFICE_WA + '?text=' + encodeURIComponent(lines.filter(Boolean).join('\n'));
+            a.hidden = false;
+        }
         const SECTIONS = ['exchange', 'remit', 'sham'];
         function setSection(name) {
             currentSection = name;
@@ -680,6 +693,7 @@
                 $('sham-words').hidden = words === null; if (words !== null) $('sham-words').textContent = words;
             };
             $('sham-amount-label').textContent = `قيمة الحوالة (${cur})`;
+            setWa('sham-wa', null);
             $('sham-cur').textContent = cur;
 
             const rule = sham && sham[cur] ? sham[cur] : null;
@@ -697,7 +711,17 @@
             const net = round2(amount - fee);
             const feeText = money(fee) + ' ' + cur;
             if (net <= 0) return set(feeLabel, feeText, '0', 'المبلغ أقل من العمولة أو يساويها');
-            set(feeLabel, feeText, money(net), isSyp ? numberToArabicWords(net) : null);
+            const words = isSyp ? numberToArabicWords(net) : null;
+            set(feeLabel, feeText, money(net), words);
+            setWa('sham-wa', [
+                'مرحباً، أريد استلام حوالة شام كاش عبر FLASH PAY:',
+                pendingName ? 'الاسم: ' + pendingName : '',
+                'العملة: ' + SHAM_NAMES[cur] + ' (' + cur + ')',
+                'قيمة الحوالة: ' + money(amount) + ' ' + cur,
+                'العمولة: ' + feeText,
+                'المبلغ المستلَم: ' + money(net) + ' ' + cur,
+                words ? '(' + words + ')' : ''
+            ]);
         }
 
         function calculateRemit() {
@@ -709,6 +733,7 @@
                 $('remit-net').textContent = net; $('remit-total').textContent = total; $('remit-words').textContent = words;
             };
             $('remit-amount-label').textContent = `المبلغ المحوَّل (${cur})`;
+            setWa('remit-wa', null);
 
             const rate = rates && rates[cur] ? rates[cur].buy : null;
             const rule = remit && remit[cur] ? remit[cur] : null;
@@ -718,7 +743,7 @@
             if (rule.pct > 0) parts.push(fmt(rule.pct, 4) + '%');
             if (rule.fixed > 0) parts.push(fmt(rule.fixed, 4) + ' ' + cur);
             const feeLabel = 'العمولة' + (parts.length ? ' (' + parts.join(' + ') + ')' : ' (بدون عمولة)');
-            const rateText = `1 ${cur} = ${fmt(rate, 6)} ل.س`;
+            const rateText = `${fmt(1, 0)} ${cur} = ${fmt(rate, 6)} ل.س`;
 
             if (!isFinite(amount) || amount <= 0) return set(rateText, feeLabel, '—', '—', '0', 'صفر ليرة سورية');
             if (amount > MAX_AMOUNT) return set(rateText, feeLabel, '—', '—', '0', 'المبلغ أكبر من الحد المسموح');
@@ -729,7 +754,20 @@
             if (net <= 0) return set(rateText, feeLabel, feeText, '—', '0', 'المبلغ أقل من العمولة أو يساويها');
 
             const total = net * rate;
-            set(rateText, feeLabel, feeText, fmt(net, 3) + ' ' + cur, new Intl.NumberFormat('ar-SY', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(total), numberToArabicWords(total));
+            const totalText = new Intl.NumberFormat('ar-SY', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(total);
+            const words = numberToArabicWords(total);
+            set(rateText, feeLabel, feeText, fmt(net, 3) + ' ' + cur, totalText, words);
+            setWa('remit-wa', [
+                'مرحباً، أريد استلام حوالة عبر FLASH PAY:',
+                pendingName ? 'الاسم: ' + pendingName : '',
+                'الحوالة من: ' + REMIT_NAMES[cur] + ' (' + cur + ')',
+                'المبلغ المحوَّل: ' + fmt(amount, 3) + ' ' + cur,
+                'العمولة: ' + feeText,
+                'المبلغ بعد العمولة: ' + fmt(net, 3) + ' ' + cur,
+                'سعر التحويل: ' + rateText,
+                'المبلغ المستلَم: ' + totalText + ' ل.س',
+                '(' + words + ')'
+            ]);
         }
 
         function calculate() {
