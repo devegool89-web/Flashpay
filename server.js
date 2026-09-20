@@ -6,8 +6,10 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 
 /* ================= الإعدادات (من متغيرات البيئة) ================= */
-const PORT = Number(process.env.PORT) || 3000;
-const HOST = process.env.HOST || '127.0.0.1';
+// تم التعديل هنا: المنفذ 7860 والنطاق 0.0.0.0 ليتوافق مع حاويات Hugging Face
+const PORT = Number(process.env.PORT) || 7860;
+const HOST = process.env.HOST || '0.0.0.0';
+
 const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data', 'db.json');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const SECURE_COOKIE = process.env.INSECURE_COOKIES !== '1'; // اجعلها 1 للتجربة على http محلياً فقط
