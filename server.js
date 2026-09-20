@@ -276,7 +276,7 @@ function sendPage(res, html, isAdmin) {
     "style-src-attr 'unsafe-inline'",
     "font-src https://fonts.gstatic.com",
     "img-src 'self' data:",
-    "connect-src 'self'",
+    isAdmin ? "connect-src 'self'" : "connect-src 'self' https://www.google.com https://fcm.googleapis.com https://updates.push.services.mozilla.com",
     "base-uri 'none'",
     "form-action 'none'",
     "worker-src 'self'",

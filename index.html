@@ -293,11 +293,24 @@
             } catch (e) { return { ok: false, why: 'شبكة: ' + (e.name || '') + ' ' + (e.message || '') }; }
         }
         function showPushHint(text) { $('push-hint').textContent = text; $('push-hint').hidden = false; }
-        function pushFail(e) {
+        async function reachability() {
+            const probes = [['Google العام', 'https://www.google.com/generate_204'], ['خدمة Google للإشعارات FCM', 'https://fcm.googleapis.com/'], ['خدمة Mozilla للإشعارات', 'https://updates.push.services.mozilla.com/']];
+            const out = await Promise.all(probes.map(async ([name, url]) => {
+                const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 6000), t0 = performance.now();
+                try { await fetch(url, { mode: 'no-cors', cache: 'no-store', signal: ctl.signal }); clearTimeout(timer); return name + ': وصل'; }
+                catch (e) { clearTimeout(timer); return name + ': فشل بعد ' + Math.round(performance.now() - t0) + 'ms (' + (e.name || 'error') + ')'; }
+            }));
+            return out.join('\n');
+        }
+        async function pushFail(e) {
             const name = (e && e.name) || 'Error', msg = (e && e.message) || '';
-            let why = '';
-            if (pushStep === 'subscribe' && name === 'AbortError') why = ' — قد يكون السبب أن خدمة الإشعارات (Google) غير متاحة على هذا الجهاز أو هذه الشبكة، جرّب إيقاف VPN أو شبكة أخرى.';
-            showPushHint('تعذّر تفعيل الإشعارات [' + pushStep + '] ' + name + (msg ? ': ' + msg.slice(0, 120) : '') + why);
+            const base = 'تعذّر تفعيل الإشعارات [' + pushStep + '] ' + name + (msg ? ': ' + msg.slice(0, 120) : '');
+            showPushHint(base);
+            if (pushStep === 'subscribe' || pushStep === 'subscribe-empty') {
+                showPushHint(base + '\nجارٍ قياس اتصال جهازك…');
+                let r = ''; try { r = await reachability(); } catch (x) { r = 'تعذّر القياس'; }
+                showPushHint(base + '\nقياس الاتصال من جهازك الآن:\n' + r);
+            }
         }
         function shouldAsk() {
             if (!PUSH_OK || Notification.permission !== 'default' || lsGet(PUSH_OFF_KEY)) return false;
