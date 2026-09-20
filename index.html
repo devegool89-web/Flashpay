@@ -309,8 +309,25 @@
             if (pushStep === 'subscribe' || pushStep === 'subscribe-empty') {
                 showPushHint(base + '\nجارٍ قياس اتصال جهازك…');
                 let r = ''; try { r = await reachability(); } catch (x) { r = 'تعذّر القياس'; }
-                showPushHint(base + '\nقياس الاتصال من جهازك الآن:\n' + r);
+                const part1 = base + '\nقياس الاتصال من جهازك الآن:\n' + r;
+                showPushHint(part1 + '\nجارٍ اختبار مستقل بمفتاح عشوائي…');
+                const ctl = await controlSubscribe();
+                showPushHint(part1 + '\nاختبار مستقل (مفتاح عشوائي من المتصفح لا علاقة له بموقعك): ' + ctl.text + (ctl.failed ? '\n⇐ نفس الفشل مع مفتاح آخر، أي أن المشكلة في تسجيل هذا الجهاز/المتصفح لدى خدمة الإشعارات وليست في مفتاح موقعك أو السيرفر.' : ctl.ok ? '\n⇐ نجح بمفتاح آخر: المشكلة مرتبطة بمفتاح موقعك، أبلغ المطوّر.' : ''));
             }
+        }
+        async function controlSubscribe() {
+            const t0 = performance.now();
+            try {
+                const kp = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+                const raw = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey));
+                const sub = await Promise.race([
+                    swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw }),
+                    new Promise((_, rej) => setTimeout(() => { const e = new Error('انتهت المهلة 20000ms'); e.name = 'Timeout'; rej(e); }, 20000))
+                ]);
+                if (!sub) return { text: 'أعاد null', failed: true };
+                try { await sub.unsubscribe(); } catch (e) {}
+                return { text: 'نجح بعد ' + Math.round(performance.now() - t0) + 'ms', ok: true };
+            } catch (e) { return { text: 'فشل — ' + (e.name || 'Error') + (e.message ? ': ' + String(e.message).slice(0, 80) : ''), failed: true }; }
         }
         function shouldAsk() {
             if (!PUSH_OK || Notification.permission !== 'default' || lsGet(PUSH_OFF_KEY)) return false;
